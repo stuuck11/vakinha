@@ -47,5 +47,5 @@ export interface DonationConfig {
 export enum Page {
   Home = 'home',
   Contribution = 'contribution',
-  Main = 'main'
+  Admin = 'admin'
 }

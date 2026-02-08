@@ -16,7 +16,7 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
               <li><a href="#" className="hover:text-white">Quem somos</a></li>
               <li><a href="#" className="hover:text-white">Campanhas</a></li>
               <li><a href="#" className="hover:text-white">Criar campanha</a></li>
-              <li><button onClick={onAdminClick} className="hover:text-white text-left">Acesso Principal (Login)</button></li>
+              <li><button onClick={onAdminClick} className="hover:text-white text-left">Acesso Admin (Login)</button></li>
               <li><a href="#" className="hover:text-white">Política de privacidade</a></li>
               <li><a href="#" className="hover:text-white">Termos de uso</a></li>
             </ul>
@@ -49,7 +49,7 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
         </div>
 
         <div className="mt-16 pt-8 border-t border-gray-800 text-center text-xs text-gray-500">
-          <p>© 2024 União Solidária - Projeto Main. Todos os direitos reservados.</p>
+          <p>© 2024 União Solidária. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

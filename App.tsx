@@ -15,8 +15,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleHash = () => {
-      if (window.location.hash === '#main') {
-        setCurrentPage(Page.Main);
+      if (window.location.hash === '#admin') {
+        setCurrentPage(Page.Admin);
       } else {
         setCurrentPage(Page.Home);
       }
@@ -43,7 +43,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFDFD]">
-      {currentPage !== Page.Main && <Header onDonateClick={navigateToDonate} />}
+      {currentPage !== Page.Admin && <Header onDonateClick={navigateToDonate} />}
       
       <main className="flex-grow">
         {currentPage === Page.Home && (
@@ -52,7 +52,7 @@ const App: React.FC = () => {
         {currentPage === Page.Contribution && (
           <ContributionPage onBack={navigateToHome} config={config} />
         )}
-        {currentPage === Page.Main && (
+        {currentPage === Page.Admin && (
           <AdminPage onUpdate={refreshConfig} onBack={navigateToHome} />
         )}
       </main>
@@ -61,9 +61,9 @@ const App: React.FC = () => {
         <StickyDonateButton onClick={navigateToDonate} />
       )}
 
-      {currentPage !== Page.Main && (
+      {currentPage !== Page.Admin && (
         <Footer onAdminClick={() => {
-          window.location.hash = 'main';
+          window.location.hash = 'admin';
         }} />
       )}
     </div>

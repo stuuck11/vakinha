@@ -26,7 +26,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((loginData.user === 'main' || loginData.user === 'admin') && (loginData.pass === 'main' || loginData.pass === 'admin')) {
+    // Credenciais corrigidas para: stuuck / stuuck77
+    if (loginData.user === 'stuuck' && loginData.pass === 'stuuck77') {
       setIsLoggedIn(true);
     } else {
       alert('Credenciais incorretas!');
@@ -48,7 +49,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
       currentAmount: 0,
       heartsCount: 0,
       supportersCount: 0,
-      creatorName: 'Principal',
+      creatorName: 'Admin',
       creatorSince: new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
       presetAmounts: [30, 50, 75, 100, 200, 500, 750, 1000],
       minAmount: 20,
@@ -143,12 +144,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md space-y-6">
-          <h1 className="text-2xl font-black text-center text-gray-800 tracking-tighter">Login Principal</h1>
-          <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest -mt-4">Gestão da Branch Main</p>
+        <form onSubmit={handleLogin} className="bg-white p-8 rounded-3xl shadow-xl w-full max-md space-y-6">
+          <h1 className="text-2xl font-black text-center text-gray-800 tracking-tighter">Login Admin</h1>
+          <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest -mt-4">Gestão do Sistema</p>
           <input type="text" placeholder="Usuário" className="w-full border-2 p-3 rounded-xl outline-none bg-white" onChange={e => setLoginData({...loginData, user: e.target.value})} />
           <input type="password" placeholder="Senha" className="w-full border-2 p-3 rounded-xl outline-none bg-white" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
-          <button className="w-full bg-[#24CA68] text-white py-4 rounded-xl font-black shadow-lg shadow-green-100">Acessar Painel</button>
+          <button className="w-full bg-[#24CA68] text-white py-4 rounded-xl font-black shadow-lg shadow-green-100 transition-transform active:scale-95">Acessar Painel</button>
         </form>
       </div>
     );
@@ -157,7 +158,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-black text-gray-800 tracking-tighter">Painel Principal</h1>
+        <h1 className="text-3xl font-black text-gray-800 tracking-tighter">Painel Admin</h1>
         <div className="flex gap-3">
           <button onClick={onBack} className="bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-all">Visualizar Site</button>
           <button onClick={handleCreateNew} className="bg-[#24CA68] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-100">+ Nova Campanha</button>
@@ -195,7 +196,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
             </div>
 
             <div className="space-y-4">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configurações Técnicas (Main)</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configurações Técnicas</label>
               <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100 space-y-4">
                  <div>
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-1">ID DA CAMPANHA</span>
@@ -256,7 +257,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
             </div>
           </div>
 
-          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-green-600 transition-all">Salvar Alterações na Branch Main</button>
+          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-green-600 transition-all">Salvar Alterações</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
