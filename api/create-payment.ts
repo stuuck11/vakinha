@@ -6,7 +6,7 @@ import Stripe from 'stripe';
  * ou ASAAS_API_KEY nas variáveis de ambiente.
  */
 
-// Fix: Updated Stripe API version to match the type requirements of the current package version
+// Fix: Updated Stripe API version to '2026-01-28.clover' to match the requirement of the installed SDK version
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2026-01-28.clover',
 });
