@@ -81,8 +81,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => 
             <h2 className="text-[13px] font-black text-gray-800">Ajude o Malak a lutar pela vida 🐾 💛</h2>
             <p className="text-[12px] text-gray-500 leading-relaxed font-medium line-clamp-3">{config.description}</p>
             <button onClick={scrollToDescription} className="text-[11px] font-bold text-gray-400 hover:text-gray-600">ver tudo</button>
-            <div onClick={onDonateClick} className="w-9 h-9 bg-black rounded flex items-center justify-center cursor-pointer">
-               <span className="text-white text-sm">✋</span>
+            <div onClick={onDonateClick} className="w-10 h-10 bg-black rounded-xl flex items-center justify-center cursor-pointer transition-all hover:opacity-80">
+               <span className="text-sm">✋</span>
             </div>
           </div>
 

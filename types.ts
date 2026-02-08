@@ -20,6 +20,16 @@ export interface StripeConfig {
   isTestMode: boolean;
 }
 
+export interface MercadoPagoConfig {
+  publicKey: string;
+}
+
+export interface AsaasConfig {
+  apiKey: string;
+}
+
+export type PaymentGateway = 'stripe' | 'mercadopago' | 'asaas';
+
 export interface DonationConfig {
   id: string;
   campaignId: string;
@@ -41,7 +51,10 @@ export interface DonationConfig {
   upsells: UpsellOption[];
   isActive: boolean;
   supporters: Supporter[];
+  gateway: PaymentGateway;
   stripeConfig: StripeConfig;
+  mercadopagoConfig: MercadoPagoConfig;
+  asaasConfig: AsaasConfig;
 }
 
 export enum Page {

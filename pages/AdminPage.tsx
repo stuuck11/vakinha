@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { DonationConfig, Supporter } from '../types';
+import { DonationConfig, Supporter, PaymentGateway } from '../types';
 import { saveCampaigns, getStoredCampaigns } from '../constants';
 
 interface AdminPageProps {
@@ -26,7 +26,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Credenciais corrigidas para: stuuck / stuuck77
     if (loginData.user === 'stuuck' && loginData.pass === 'stuuck77') {
       setIsLoggedIn(true);
     } else {
@@ -60,7 +59,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
       ],
       isActive: false,
       supporters: [],
-      stripeConfig: { publicKey: '', isTestMode: true }
+      gateway: 'stripe',
+      stripeConfig: { publicKey: '', isTestMode: true },
+      mercadopagoConfig: { publicKey: '' },
+      asaasConfig: { apiKey: '' }
     };
     setEditingId(newCamp.id);
     setFormData(newCamp);
@@ -90,13 +92,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
   const handleSaveForm = () => {
     if (!formData) return;
     
-    if (formData.stripeConfig.isTestMode && formData.stripeConfig.publicKey.trim().startsWith('pk_live')) {
-      alert("Erro de Ambiente: Você ativou o 'Modo de Teste' mas inseriu uma chave de Produção (pk_live).");
-      return;
-    }
-    if (!formData.stripeConfig.isTestMode && formData.stripeConfig.publicKey.trim().startsWith('pk_test')) {
-      alert("Erro de Ambiente: Você desativou o 'Modo de Teste' (Produção) mas inseriu uma chave de Teste (pk_test).");
-      return;
+    if (formData.gateway === 'stripe') {
+      if (formData.stripeConfig.isTestMode && formData.stripeConfig.publicKey.trim().startsWith('pk_live')) {
+        alert("Erro Stripe: Chave de Produção em Modo de Teste.");
+        return;
+      }
     }
 
     let updated;
@@ -111,7 +111,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
     setEditingId(null);
     setFormData(null);
     onUpdate();
-    alert('Salvo com sucesso!');
+    alert('Configurações salvas!');
   };
 
   const addSupporter = () => {
@@ -143,13 +143,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-3xl shadow-xl w-full max-md space-y-6">
-          <h1 className="text-2xl font-black text-center text-gray-800 tracking-tighter">Login Admin</h1>
-          <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest -mt-4">Gestão do Sistema</p>
-          <input type="text" placeholder="Usuário" className="w-full border-2 p-3 rounded-xl outline-none bg-white" onChange={e => setLoginData({...loginData, user: e.target.value})} />
-          <input type="password" placeholder="Senha" className="w-full border-2 p-3 rounded-xl outline-none bg-white" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
-          <button className="w-full bg-[#24CA68] text-white py-4 rounded-xl font-black shadow-lg shadow-green-100 transition-transform active:scale-95">Acessar Painel</button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <form onSubmit={handleLogin} className="bg-white p-10 rounded-3xl shadow-xl w-full max-w-md space-y-6 border border-gray-100">
+          <h1 className="text-2xl font-black text-center text-gray-800 tracking-tighter">Área do Organizador</h1>
+          <p className="text-center text-gray-400 text-xs font-bold uppercase tracking-widest -mt-4">Identificação Necessária</p>
+          <input type="text" placeholder="Usuário" className="w-full border p-4 rounded-xl outline-none bg-white focus:border-[#24CA68]" onChange={e => setLoginData({...loginData, user: e.target.value})} />
+          <input type="password" placeholder="Senha" className="w-full border p-4 rounded-xl outline-none bg-white focus:border-[#24CA68]" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
+          <button className="w-full bg-[#24CA68] text-white py-4 rounded-xl font-black shadow-lg shadow-green-100 transition-transform active:scale-95">Entrar na Conta</button>
         </form>
       </div>
     );
@@ -160,8 +160,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-black text-gray-800 tracking-tighter">Painel Admin</h1>
         <div className="flex gap-3">
-          <button onClick={onBack} className="bg-black text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition-all">Visualizar Site</button>
-          <button onClick={handleCreateNew} className="bg-[#24CA68] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-100">+ Nova Campanha</button>
+          <button onClick={onBack} className="bg-gray-100 text-gray-800 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all">Ver Site</button>
+          <button onClick={handleCreateNew} className="bg-[#24CA68] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-100">+ Criar Campanha</button>
         </div>
       </div>
 
@@ -169,81 +169,101 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
         <div className="bg-white rounded-3xl border shadow-xl p-8 space-y-8 animate-slide-up">
           <div className="flex justify-between items-center border-b pb-4">
              <h2 className="text-xl font-black text-gray-800">Editando: {formData.title}</h2>
-             <button onClick={() => setEditingId(null)} className="text-red-500 font-bold hover:underline">Fechar Edição</button>
+             <button onClick={() => setEditingId(null)} className="text-red-500 font-bold hover:underline">Fechar</button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Identidade Visual</label>
-              <div className="space-y-3 p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-gray-400">URL LOGO</span>
-                  <input value={formData.logoUrl} onChange={e => setFormData({...formData, logoUrl: e.target.value})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-gray-400">URL ÍCONE SELO</span>
-                  <input value={formData.sealIcon} onChange={e => setFormData({...formData, sealIcon: e.target.value})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black text-gray-400">IMAGEM DE CAPA</span>
-                  <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                </div>
+            <div className="space-y-6">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Aparência e Texto</label>
+              <div className="space-y-4 p-5 bg-white rounded-2xl border border-gray-100">
+                <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Título da Campanha" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Descrição completa..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL Imagem de Capa" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
               </div>
               
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Conteúdo da Página</label>
-              <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Título" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-              <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} rows={6} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-            </div>
-
-            <div className="space-y-4">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configurações Técnicas</label>
-              <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100 space-y-4">
-                 <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-1">ID DA CAMPANHA</span>
-                    <input value={formData.campaignId} onChange={e => setFormData({...formData, campaignId: e.target.value})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                 </div>
-                 <div className="border-t pt-4">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-1">STRIPE PUBLIC KEY</span>
-                    <input value={formData.stripeConfig.publicKey} onChange={e => setFormData({...formData, stripeConfig: {...formData.stripeConfig, publicKey: e.target.value}})} className="w-full border p-3 rounded-lg bg-white font-mono text-xs outline-none focus:border-[#24CA68]" />
-                 </div>
-                 <div className="flex items-center gap-3 bg-white p-3 rounded-xl border">
-                    <input type="checkbox" id="test-mode" checked={formData.stripeConfig.isTestMode} onChange={e => setFormData({...formData, stripeConfig: {...formData.stripeConfig, isTestMode: e.target.checked}})} className="w-4 h-4 accent-[#24CA68]" />
-                    <label htmlFor="test-mode" className="text-sm font-bold text-gray-700 cursor-pointer">Modo de Teste</label>
-                 </div>
-              </div>
-              
-              <label className="block text-xs font-bold text-gray-400 mt-4 uppercase tracking-widest">Financeiro</label>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-1">Meta (R$)</span>
-                   <input type="number" value={formData.targetAmount} onChange={e => setFormData({...formData, targetAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meta (R$)</span>
+                   <input type="number" value={formData.targetAmount} onChange={e => setFormData({...formData, targetAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg outline-none focus:border-[#24CA68] bg-white" />
                 </div>
                 <div>
-                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter block mb-1">Atual (R$)</span>
-                   <input type="number" value={formData.currentAmount} onChange={e => setFormData({...formData, currentAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Arrecadado (R$)</span>
+                   <input type="number" value={formData.currentAmount} onChange={e => setFormData({...formData, currentAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg outline-none focus:border-[#24CA68] bg-white" />
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configuração de Pagamento (PIX)</label>
+              <div className="bg-[#F8FBFF] p-6 rounded-3xl border border-blue-100 space-y-5">
+                 <div className="space-y-2">
+                    <span className="text-[10px] font-black text-blue-900 uppercase">Provedor de Pagamento</span>
+                    <select 
+                      value={formData.gateway} 
+                      onChange={e => setFormData({...formData, gateway: e.target.value as PaymentGateway})}
+                      className="w-full p-3 rounded-xl border border-blue-200 focus:border-blue-500 outline-none font-bold text-sm bg-white"
+                    >
+                      <option value="stripe">Stripe (Global)</option>
+                      <option value="mercadopago">Mercado Pago (Recomendado BR)</option>
+                      <option value="asaas">Asaas (Brasil)</option>
+                    </select>
+                 </div>
+
+                 {formData.gateway === 'stripe' ? (
+                   <div className="space-y-3 animate-slide-up">
+                      <div className="p-3 bg-red-50 text-[10px] font-bold text-red-600 rounded-lg">
+                        ⚠️ Stripe exige ativação manual do PIX no Dashboard.
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Stripe Public Key</span>
+                        <input value={formData.stripeConfig.publicKey} onChange={e => setFormData({...formData, stripeConfig: {...formData.stripeConfig, publicKey: e.target.value}})} placeholder="pk_live_..." className="w-full border p-3 rounded-lg font-mono text-xs outline-none focus:border-[#24CA68] bg-white" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="test" checked={formData.stripeConfig.isTestMode} onChange={e => setFormData({...formData, stripeConfig: {...formData.stripeConfig, isTestMode: e.target.checked}})} className="bg-white" />
+                        <label htmlFor="test" className="text-xs font-bold text-gray-600">Modo de Teste</label>
+                      </div>
+                   </div>
+                 ) : formData.gateway === 'asaas' ? (
+                   <div className="space-y-3 animate-slide-up">
+                      <div className="p-3 bg-purple-50 text-[10px] font-bold text-purple-600 rounded-lg">
+                        🟣 Asaas é excelente para PIX e cobranças recorrentes.
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Asaas API Key</span>
+                        <input value={formData.asaasConfig.apiKey} onChange={e => setFormData({...formData, asaasConfig: { apiKey: e.target.value }})} placeholder="$a..." className="w-full border p-3 rounded-lg font-mono text-xs outline-none focus:border-purple-500 bg-white" />
+                      </div>
+                   </div>
+                 ) : (
+                   <div className="space-y-3 animate-slide-up">
+                      <div className="p-3 bg-green-50 text-[10px] font-bold text-green-600 rounded-lg">
+                        ✅ Mercado Pago é mais fácil de ativar para PIX no Brasil.
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Public Key do Mercado Pago</span>
+                        <input value={formData.mercadopagoConfig.publicKey} onChange={e => setFormData({...formData, mercadopagoConfig: { publicKey: e.target.value }})} placeholder="APP_USR-..." className="w-full border p-3 rounded-lg font-mono text-xs outline-none focus:border-blue-500 bg-white" />
+                      </div>
+                   </div>
+                 )}
               </div>
             </div>
           </div>
 
           <div className="pt-8 border-t">
-            <h3 className="font-black text-lg mb-4 text-gray-800">Gerenciar Doadores</h3>
-            <div className="bg-gray-50/50 p-6 rounded-2xl border border-gray-100 space-y-4 mb-6">
+            <h3 className="font-black text-lg mb-4 text-gray-800">Doadores Fictícios / Reais</h3>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 space-y-4 mb-6 shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input placeholder="Nome" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="w-full border p-2.5 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                <input type="number" placeholder="Valor" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="w-full border p-2.5 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                <input placeholder="Tempo" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-2.5 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                <button onClick={addSupporter} className={`w-full py-2.5 rounded-lg font-bold text-white transition-all ${editingSupporterId ? 'bg-orange-500' : 'bg-black'}`}>
+                <input placeholder="Nome" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="w-full border p-3 rounded-lg bg-white focus:border-[#24CA68] outline-none" />
+                <input type="number" placeholder="Valor" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white focus:border-[#24CA68] outline-none" />
+                <input placeholder="Tempo" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white focus:border-[#24CA68] outline-none" />
+                <button onClick={addSupporter} className={`w-full py-3 rounded-lg font-bold text-white transition-all ${editingSupporterId ? 'bg-orange-500' : 'bg-[#24CA68]'}`}>
                   {editingSupporterId ? 'Salvar' : 'Adicionar'}
                 </button>
               </div>
             </div>
 
-            <div className="max-h-64 overflow-y-auto border rounded-xl divide-y bg-white">
-               {formData.supporters.length === 0 ? (
-                 <p className="p-8 text-center text-gray-400 text-sm italic">Nenhum doador.</p>
-               ) : formData.supporters.map(s => (
-                 <div key={s.id} className="flex justify-between items-center p-4 hover:bg-gray-50">
+            <div className="max-h-64 overflow-y-auto border rounded-xl divide-y">
+               {formData.supporters.map(s => (
+                 <div key={s.id} className="flex justify-between items-center p-4 hover:bg-gray-50 bg-white">
                    <div className="flex flex-col">
                       <span className="text-sm font-black text-gray-800">{s.name} - R$ {s.amount.toFixed(2)}</span>
                       <span className="text-[10px] font-bold text-gray-400">{s.time}</span>
@@ -257,25 +277,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
             </div>
           </div>
 
-          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-green-600 transition-all">Salvar Alterações</button>
+          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:scale-[1.01] transition-all">Salvar Todas Alterações</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {campaigns.map(camp => (
-            <div key={camp.id} className={`bg-white border-2 rounded-3xl p-6 space-y-4 transition-all ${camp.isActive ? 'border-[#24CA68]' : 'border-gray-100'}`}>
-              <h3 className="font-black truncate text-gray-800 tracking-tighter">{camp.title}</h3>
-              <div className="flex justify-between items-center">
-                 <span className="text-xs font-bold text-gray-400">ID: {camp.campaignId}</span>
-                 <span className="text-sm font-black text-[#24CA68]">R$ {camp.currentAmount.toLocaleString('pt-BR')}</span>
+            <div key={camp.id} className={`bg-white border-2 rounded-3xl p-6 space-y-4 shadow-sm ${camp.isActive ? 'border-[#24CA68]' : 'border-gray-100'}`}>
+              <h3 className="font-black truncate text-gray-800">{camp.title}</h3>
+              <div className="flex justify-between items-center text-[10px] font-bold text-gray-400">
+                 <span>GATEWAY: {camp.gateway.toUpperCase()}</span>
+                 <span className="text-[#24CA68]">R$ {camp.currentAmount.toLocaleString('pt-BR')}</span>
               </div>
-              <div className="flex gap-2 pt-2">
-                <button onClick={() => handleEdit(camp)} className="flex-1 bg-gray-100 py-3 rounded-xl text-xs font-black text-gray-600 uppercase tracking-widest">Configurar</button>
+              <div className="flex gap-2">
+                <button onClick={() => handleEdit(camp)} className="flex-1 bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors">Editar</button>
                 {!camp.isActive && (
-                  <button onClick={() => handleSetActive(camp.id)} className="flex-1 bg-black text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest">Ativar</button>
+                  <button onClick={() => handleSetActive(camp.id)} className="flex-1 bg-[#24CA68] text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">Ativar</button>
                 )}
-                <button onClick={() => handleDelete(camp.id)} className="px-3 text-red-300 hover:text-red-500">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
               </div>
             </div>
           ))}

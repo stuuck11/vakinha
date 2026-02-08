@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" style="color-scheme: light;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,7 +21,7 @@
       }
       
       body {
-        background-color: #F9FAFB;
+        background-color: #FDFDFD;
         color: #111827;
       }
 
@@ -44,6 +44,12 @@
       .animate-slide-up {
         animation: slideUp 0.4s ease-out forwards;
       }
+
+      /* Explicitly force white background on inputs to avoid any browser defaults */
+      input, textarea, select {
+        background-color: #FFFFFF !important;
+        color: #111827 !important;
+      }
     </style>
 
     <script type="importmap">
@@ -62,7 +68,7 @@
 </script>
   <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-gray-50 text-gray-900 overflow-x-hidden">
+  <body class="bg-[#FDFDFD] text-gray-900 overflow-x-hidden">
     <div id="root"></div>
     <!-- O caminho do script deve ser relativo para funcionar em qualquer hospedagem -->
     <script type="module" src="./index.tsx"></script>
