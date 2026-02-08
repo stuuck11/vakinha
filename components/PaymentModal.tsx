@@ -19,7 +19,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
   useEffect(() => {
     const initPayment = async () => {
       try {
-        // Passamos o config inteiro para que o service pegue as chaves da API
         const response = await paymentService.createPixPayment(total, donorData, config);
         
         if (response.isDemo) {
@@ -50,9 +49,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         }
       } catch (err: any) {
         setError(
-          <div className="text-center">
-            <p className="font-black text-red-500 mb-2">Erro na Transação</p>
-            <p className="text-xs text-gray-500 font-bold uppercase">{err.message}</p>
+          <div className="text-center p-4">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">⚠️</div>
+            <p className="font-black text-gray-800 text-lg mb-2">Ops! Ocorreu um problema</p>
+            <p className="text-sm text-red-500 font-bold bg-red-50 py-2 px-4 rounded-lg inline-block">{err.message}</p>
+            <p className="mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+              Dica: Verifique se sua conta no {config.gateway.toUpperCase()} está aprovada para receber PIX.
+            </p>
           </div>
         );
       } finally {
@@ -75,15 +78,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
       
       <div className="relative bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-up">
         {loading ? (
-          <div className="p-12 flex flex-col items-center justify-center space-y-4">
+          <div className="p-16 flex flex-col items-center justify-center space-y-4">
             <div className="w-12 h-12 border-4 border-[#24CA68] border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-bold text-gray-500 italic">Gerando PIX real...</p>
+            <p className="font-bold text-gray-400 italic text-sm">Contatando {config.gateway.toUpperCase()}...</p>
           </div>
         ) : error ? (
-          <div className="p-10 text-center space-y-6">
-            <div className="text-5xl">⚠️</div>
+          <div className="p-10 space-y-6">
             {error}
-            <button onClick={onClose} className="w-full bg-gray-100 py-3 rounded-xl font-black text-gray-500 uppercase text-xs tracking-widest hover:bg-gray-200">Voltar</button>
+            <button onClick={onClose} className="w-full bg-gray-100 py-4 rounded-2xl font-black text-gray-500 uppercase text-xs tracking-widest hover:bg-gray-200 transition-all">Entendido, vou verificar</button>
           </div>
         ) : (
           <>
@@ -92,13 +94,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
                 <div className="bg-[#24CA68]/10 px-3 py-1 rounded-full flex items-center gap-2">
                    <div className="w-2 h-2 bg-[#24CA68] rounded-full animate-pulse" />
                    <span className="text-[10px] font-black text-[#24CA68] uppercase tracking-widest">
-                     {pixData?.isDemo ? 'Modo Demonstração' : 'PIX Oficial Gerado'}
+                     PIX Oficial Gerado
                    </span>
                 </div>
               </div>
               <h2 className="text-xl font-black">Escaneie o QR Code</h2>
               <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-tighter">
-                {config.gateway.toUpperCase()} • {campaignTitle}
+                Sua doação vai direto para a causa
               </p>
             </div>
 

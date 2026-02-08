@@ -2,7 +2,6 @@ import { DonationConfig } from '../types';
 
 /**
  * Generic Payment Service - Secure Version
- * Strictly client-to-server with NO keys in payload.
  */
 export const paymentService = {
   createPixPayment: async (
@@ -29,13 +28,14 @@ export const paymentService = {
 
       clearTimeout(timeoutId);
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Servidor indisponível' }));
-        throw new Error(errorData.error || 'Falha ao processar pagamento');
+        // Se o servidor respondeu com erro, lançamos esse erro específico
+        throw new Error(data.error || 'Falha ao processar pagamento no servidor');
       }
 
-      const data = await response.json();
-
+      // Se chegamos aqui, verificamos se o QR Code veio no formato esperado
       if (data.next_action?.pix_display_qr_code || 
           data.point_of_interaction?.transaction_data?.qr_code || 
           (data.provider === 'asaas' && data.pix)) {
@@ -45,23 +45,23 @@ export const paymentService = {
       throw new Error('O provedor não retornou um QR Code válido.');
     } catch (err: any) {
       clearTimeout(timeoutId);
-      console.error("Payment Error:", err.message);
-
-      // Erros de configuração de servidor são críticos e devem ser mostrados
-      if (err.message.includes('Configuração de servidor ausente')) {
-        throw err;
+      
+      // Se for um erro de abort (timeout) ou erro de rede (fetch failed)
+      if (err.name === 'AbortError' || err.message.includes('fetch')) {
+        return {
+          isDemo: true,
+          next_action: {
+            pix_display_qr_code: {
+              image_url_svg: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ERRO_DE_CONEXAO`,
+              data: 'ERRO_DE_CONEXAO_OU_TIMEOUT'
+            }
+          }
+        };
       }
 
-      // Fallback visual apenas para demonstração local em caso de erro de rede
-      return {
-        isDemo: true,
-        next_action: {
-          pix_display_qr_code: {
-            image_url_svg: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ERRO_CONFIGURACAO_SERVIDOR_REVISE_ENV_VARS`,
-            data: 'ERRO_DE_CONEXAO_OU_CONFIGURACAO'
-          }
-        }
-      };
+      // Se for um erro retornado pelo backend (ex: "Conta em análise")
+      // nós relançamos para o componente mostrar na tela
+      throw err;
     }
   }
 };

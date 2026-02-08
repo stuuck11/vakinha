@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Page, DonationConfig } from './types';
 import { Header } from './components/Header';
@@ -15,10 +14,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleHash = () => {
-      if (window.location.hash === '#admin') {
-        setCurrentPage(Page.Admin);
+      if (window.location.hash === '#campaign') {
+        setCurrentPage(Page.Admin); // Usando Page.Admin como slot para Visualização Pública
       } else {
-        setCurrentPage(Page.Home);
+        setCurrentPage(Page.Home); // Raiz agora é o Admin Login
       }
     };
     handleHash();
@@ -27,7 +26,10 @@ const App: React.FC = () => {
   }, []);
 
   const refreshConfig = () => {
-    setConfig(getActiveCampaign());
+    // Mantém a config atual se já estiver visualizando uma específica
+    if (currentPage !== Page.Admin) {
+      setConfig(getActiveCampaign());
+    }
   };
 
   const navigateToDonate = () => {
@@ -36,35 +38,44 @@ const App: React.FC = () => {
   };
 
   const navigateToHome = () => {
+    // Volta para o Painel Administrativo
     setCurrentPage(Page.Home);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     window.location.hash = '';
   };
 
+  const handleViewCampaign = (selectedConfig: DonationConfig) => {
+    setConfig(selectedConfig);
+    setCurrentPage(Page.Admin);
+    window.location.hash = 'campaign';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFDFD]">
-      {currentPage !== Page.Admin && <Header onDonateClick={navigateToDonate} />}
+      {currentPage !== Page.Home && <Header onDonateClick={navigateToDonate} />}
       
       <main className="flex-grow">
         {currentPage === Page.Home && (
+          <AdminPage onUpdate={refreshConfig} onBack={navigateToHome} onViewCampaign={handleViewCampaign} />
+        )}
+        {currentPage === Page.Admin && (
           <HomePage onDonateClick={navigateToDonate} config={config} />
         )}
         {currentPage === Page.Contribution && (
-          <ContributionPage onBack={navigateToHome} config={config} />
-        )}
-        {currentPage === Page.Admin && (
-          <AdminPage onUpdate={refreshConfig} onBack={navigateToHome} />
+          <ContributionPage onBack={() => {
+            window.location.hash = 'campaign';
+            setCurrentPage(Page.Admin);
+          }} config={config} />
         )}
       </main>
 
-      {currentPage === Page.Home && (
+      {currentPage === Page.Admin && (
         <StickyDonateButton onClick={navigateToDonate} />
       )}
 
-      {currentPage !== Page.Admin && (
-        <Footer onAdminClick={() => {
-          window.location.hash = 'admin';
-        }} />
+      {currentPage !== Page.Home && (
+        <Footer onAdminClick={navigateToHome} />
       )}
     </div>
   );

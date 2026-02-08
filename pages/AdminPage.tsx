@@ -5,9 +5,10 @@ import { saveCampaigns, getStoredCampaigns } from '../constants';
 interface AdminPageProps {
   onUpdate: () => void;
   onBack: () => void;
+  onViewCampaign?: (c: DonationConfig) => void;
 }
 
-export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
+export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCampaign }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginData, setLoginData] = useState({ user: '', pass: '' });
   const [campaigns, setCampaigns] = useState<DonationConfig[]>(getStoredCampaigns());
@@ -73,7 +74,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
   };
 
   const handleSetActive = (id: string) => {
-    const updated = campaigns.map(c => ({ ...c, isActive: c.id === id }));
+    const updated = campaigns.map(c => c.id === id ? { ...c, isActive: !c.isActive } : c);
     setCampaigns(updated);
     saveCampaigns(updated);
     onUpdate();
@@ -134,12 +135,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <form onSubmit={handleLogin} className="bg-white p-10 rounded-3xl shadow-xl w-full max-w-md space-y-6 border border-gray-100">
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-black text-gray-800 tracking-tighter">Login Administrativo</h1>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Painel de Controle</p>
+            <h1 className="text-2xl font-black text-gray-800 tracking-tighter">Área do Organizador</h1>
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">IDENTIFICAÇÃO NECESSÁRIA</p>
           </div>
           <input type="text" placeholder="Usuário" className="w-full border p-4 rounded-xl outline-none bg-white focus:border-[#24CA68]" onChange={e => setLoginData({...loginData, user: e.target.value})} />
           <input type="password" placeholder="Senha" className="w-full border p-4 rounded-xl outline-none bg-white focus:border-[#24CA68]" onChange={e => setLoginData({...loginData, pass: e.target.value})} />
-          <button className="w-full bg-[#24CA68] text-white py-4 rounded-xl font-black shadow-lg transition-transform active:scale-95">Acessar Painel</button>
+          <button className="w-full bg-[#24CA68] text-white py-4 rounded-xl font-black shadow-lg transition-transform active:scale-95 uppercase tracking-widest text-xs">Entrar no Sistema</button>
         </form>
       </div>
     );
@@ -150,7 +151,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
       <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
         <h1 className="text-3xl font-black text-gray-800 tracking-tighter">Painel de Gerenciamento</h1>
         <div className="flex gap-3">
-          <button onClick={onBack} className="bg-gray-100 text-gray-800 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition-all">Ver Site</button>
           <button onClick={handleCreateNew} className="bg-[#24CA68] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-100">+ Nova Campanha</button>
         </div>
       </div>
@@ -277,12 +277,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack }) => {
                  <span>GATEWAY: {camp.gateway.toUpperCase()}</span>
                  <span className="text-[#24CA68]">ARRECADADO: R$ {camp.currentAmount.toLocaleString('pt-BR')}</span>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => handleEdit(camp)} className="flex-1 bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors">Configurar</button>
-                {!camp.isActive && (
-                  <button onClick={() => handleSetActive(camp.id)} className="flex-1 bg-[#24CA68] text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm">Ativar</button>
-                )}
-                <button onClick={() => handleDelete(camp.id)} className="w-12 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">🗑️</button>
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button onClick={() => onViewCampaign?.(camp)} className="col-span-2 bg-[#EEFFE6] text-[#24CA68] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#e4f9da] transition-colors border border-[#24CA68]/20">Visualizar Site</button>
+                <button onClick={() => handleEdit(camp)} className="bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors">Configurar</button>
+                <button onClick={() => handleSetActive(camp.id)} className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${camp.isActive ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-[#24CA68] text-white'}`}>
+                  {camp.isActive ? 'Desativar' : 'Ativar'}
+                </button>
+              </div>
+              <div className="flex justify-end pt-2 border-t border-gray-50">
+                <button onClick={() => handleDelete(camp.id)} className="p-2 text-red-300 hover:text-red-500 transition-colors text-xs uppercase font-black tracking-widest">Excluir Campanha</button>
               </div>
             </div>
           ))}
