@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DonationConfig, Supporter, PaymentGateway } from '../types';
 import { saveCampaigns, getStoredCampaigns } from '../constants';
@@ -31,6 +32,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
     } else {
       alert('Credenciais incorretas!');
     }
+  };
+
+  const handleCopyLink = (camp: DonationConfig) => {
+    const url = `${window.location.origin}${window.location.pathname}#c/${camp.campaignId}`;
+    navigator.clipboard.writeText(url);
+    alert('Link de divulgação copiado para a área de transferência!');
   };
 
   const handleCreateNew = () => {
@@ -279,6 +286,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
               </div>
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button onClick={() => onViewCampaign?.(camp)} className="col-span-2 bg-[#EEFFE6] text-[#24CA68] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#e4f9da] transition-colors border border-[#24CA68]/20">Visualizar Site</button>
+                <button onClick={() => handleCopyLink(camp)} className="col-span-2 bg-blue-50 text-blue-600 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors border border-blue-200">🔗 Copiar Link de Divulgação</button>
                 <button onClick={() => handleEdit(camp)} className="bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors">Configurar</button>
                 <button onClick={() => handleSetActive(camp.id)} className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${camp.isActive ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-[#24CA68] text-white'}`}>
                   {camp.isActive ? 'Desativar' : 'Ativar'}

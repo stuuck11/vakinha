@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Page, DonationConfig } from './types';
 import { Header } from './components/Header';
@@ -6,7 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { ContributionPage } from './pages/ContributionPage';
 import { AdminPage } from './pages/AdminPage';
 import { StickyDonateButton } from './components/StickyDonateButton';
-import { getActiveCampaign } from './constants';
+import { getActiveCampaign, getCampaignByCid } from './constants';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Home);
@@ -14,31 +15,56 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleHash = () => {
-      if (window.location.hash === '#campaign') {
-        setCurrentPage(Page.Admin); // Usando Page.Admin como slot para Visualização Pública
+      const hash = window.location.hash;
+      
+      // Rotas Públicas: #c/ID (Home) ou #p/ID (Pagamento)
+      if (hash.startsWith('#c/')) {
+        const cid = hash.substring(3);
+        const camp = getCampaignByCid(cid);
+        if (camp) {
+          setConfig(camp);
+          setCurrentPage(Page.Admin); // Visualização Pública
+        } else {
+          window.location.hash = '';
+        }
+      } 
+      else if (hash.startsWith('#p/')) {
+        const cid = hash.substring(3);
+        const camp = getCampaignByCid(cid);
+        if (camp) {
+          setConfig(camp);
+          setCurrentPage(Page.Contribution);
+        } else {
+          window.location.hash = '';
+        }
+      }
+      else if (hash === '#campaign') {
+        // Legado / Compatibilidade
+        setCurrentPage(Page.Admin);
       } else {
-        setCurrentPage(Page.Home); // Raiz agora é o Admin Login
+        // Dashboard Admin (Root)
+        setCurrentPage(Page.Home);
       }
     };
+
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
   const refreshConfig = () => {
-    // Mantém a config atual se já estiver visualizando uma específica
-    if (currentPage !== Page.Admin) {
+    // No Dashboard, se houver mudança, recarrega
+    if (currentPage === Page.Home) {
       setConfig(getActiveCampaign());
     }
   };
 
   const navigateToDonate = () => {
-    setCurrentPage(Page.Contribution);
+    window.location.hash = `#p/${config.campaignId}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navigateToHome = () => {
-    // Volta para o Painel Administrativo
     setCurrentPage(Page.Home);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     window.location.hash = '';
@@ -46,8 +72,7 @@ const App: React.FC = () => {
 
   const handleViewCampaign = (selectedConfig: DonationConfig) => {
     setConfig(selectedConfig);
-    setCurrentPage(Page.Admin);
-    window.location.hash = 'campaign';
+    window.location.hash = `#c/${selectedConfig.campaignId}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -64,8 +89,7 @@ const App: React.FC = () => {
         )}
         {currentPage === Page.Contribution && (
           <ContributionPage onBack={() => {
-            window.location.hash = 'campaign';
-            setCurrentPage(Page.Admin);
+            window.location.hash = `#c/${config.campaignId}`;
           }} config={config} />
         )}
       </main>

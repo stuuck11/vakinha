@@ -79,3 +79,8 @@ export const getActiveCampaign = (): DonationConfig => {
   const all = getStoredCampaigns();
   return all.find(c => c.isActive) || all[0] || INITIAL_CAMPAIGN;
 };
+
+export const getCampaignByCid = (cid: string): DonationConfig | undefined => {
+  const all = getStoredCampaigns();
+  return all.find(c => c.campaignId === cid || c.id === cid);
+};
