@@ -1,0 +1,37 @@
+
+import React from 'react';
+import { getActiveCampaign } from '../constants';
+
+interface HeaderProps {
+  onDonateClick: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onDonateClick }) => {
+  const config = getActiveCampaign();
+  
+  return (
+    <header className="bg-white border-b sticky top-0 z-50 px-4 py-3">
+      <div className="max-w-[640px] mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-1 cursor-pointer" onClick={() => window.location.hash = ''}>
+          {config.logoUrl ? (
+            <img src={config.logoUrl} alt="Logo" className="h-8 object-contain" />
+          ) : (
+            <>
+              <div className="w-7 h-7 bg-[#24CA68] rounded flex items-center justify-center text-white font-black text-xs">
+                V
+              </div>
+              <span className="font-black text-lg tracking-tighter text-gray-800">Vakinha</span>
+            </>
+          )}
+        </div>
+        
+        <button 
+          onClick={onDonateClick}
+          className="bg-[#24CA68] text-white px-5 py-2 rounded-full font-black text-[12px] shadow-sm active:scale-95 transition-all"
+        >
+          Doar Agora
+        </button>
+      </div>
+    </header>
+  );
+};
