@@ -12,7 +12,7 @@ interface PaymentModalProps {
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, campaignTitle, onClose }) => {
   const [loading, setLoading] = useState(true);
-  const [pixData, setPixData] = useState<{qrCode?: string, copyPaste: string} | null>(null);
+  const [pixData, setPixData] = useState<{qrCode?: string, copyPaste: string, isDemo?: boolean} | null>(null);
   const [error, setError] = useState<React.ReactNode | null>(null);
   const config = getActiveCampaign();
 
@@ -21,8 +21,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
       try {
         const response = await paymentService.createPixPayment(total, donorData, campaignTitle, config.gateway);
         
+        // Se for modo demo
+        if (response.isDemo) {
+          setPixData({
+            qrCode: response.next_action.pix_display_qr_code.image_url_svg,
+            copyPaste: response.next_action.pix_display_qr_code.data,
+            isDemo: true
+          });
+        }
         // Handle Asaas format
-        if (response.provider === 'asaas' && response.pix) {
+        else if (response.provider === 'asaas' && response.pix) {
           setPixData({
             qrCode: `data:image/png;base64,${response.pix.encodedImage}`,
             copyPaste: response.pix.payload
@@ -45,28 +53,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         }
       } catch (err: any) {
         const errorMsg = err.message || "";
-        
-        if (errorMsg.includes("type 'pix' is invalid")) {
-          setError(
-            <div className="space-y-2">
-              <p className="font-black text-red-500 text-lg">PIX Pendente na Stripe</p>
-              <p className="text-sm text-gray-600">
-                A Stripe exige ativação manual do PIX. Se estiver difícil, tente o <b>Mercado Pago</b> ou <b>Asaas</b> no painel admin!
-              </p>
-              <ul className="text-[10px] text-left text-gray-500 list-disc pl-4 space-y-1 mt-2 font-bold uppercase">
-                <li>Verifique se o país da conta é Brasil</li>
-                <li>Complete a verificação da conta (KYC)</li>
-                <li>Ou mude para outro gateway no Admin</li>
-              </ul>
-            </div>
-          );
-        } else {
-          setError(<p className="font-black text-red-500">{errorMsg || "Erro ao gerar PIX."}</p>);
-        }
-        
-        if (!errorMsg.includes("type 'pix' is invalid")) {
-          setTimeout(onClose, 5000);
-        }
+        setError(<p className="font-black text-red-500">{errorMsg || "Erro ao gerar PIX."}</p>);
+        setTimeout(onClose, 5000);
       } finally {
         setLoading(false);
       }
@@ -89,41 +77,44 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-4">
             <div className="w-12 h-12 border-4 border-[#24CA68] border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-bold text-gray-500 italic">Gerando PIX com segurança...</p>
+            <p className="font-bold text-gray-500 italic">Gerando PIX seguro...</p>
           </div>
         ) : error ? (
           <div className="p-10 text-center space-y-6">
             <div className="text-5xl">🏦</div>
             <div className="animate-pulse">{error}</div>
-            <button 
-              onClick={onClose}
-              className="w-full bg-gray-100 py-3 rounded-xl font-black text-gray-500 uppercase text-xs tracking-widest hover:bg-gray-200"
-            >
-              Voltar e revisar
-            </button>
+            <button onClick={onClose} className="w-full bg-gray-100 py-3 rounded-xl font-black text-gray-500 uppercase text-xs tracking-widest hover:bg-gray-200">Voltar</button>
           </div>
         ) : (
           <>
             <div className="p-6 text-center border-b bg-gray-50/50">
+              {pixData?.isDemo && (
+                <div className="bg-amber-500 text-white text-[10px] font-black py-1 px-4 rounded-full mb-3 uppercase tracking-widest animate-bounce">
+                  Atenção: Modo de Demonstração
+                </div>
+              )}
               <div className="flex justify-center mb-2">
                 <div className="bg-[#24CA68]/10 px-3 py-1 rounded-full flex items-center gap-2">
                    <div className="w-2 h-2 bg-[#24CA68] rounded-full animate-pulse" />
-                   <span className="text-[10px] font-black text-[#24CA68] uppercase tracking-widest">Aguardando Pagamento</span>
+                   <span className="text-[10px] font-black text-[#24CA68] uppercase tracking-widest">
+                     {pixData?.isDemo ? 'Simulação de Pagamento' : 'Aguardando Pagamento'}
+                   </span>
                 </div>
               </div>
               <h2 className="text-xl font-black">Escaneie o QR Code</h2>
-              <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-tighter">Provedor: {config.gateway.toUpperCase()}</p>
+              <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-tighter">
+                {pixData?.isDemo ? 'DEMO' : `Provedor: ${config.gateway.toUpperCase()}`}
+              </p>
             </div>
 
             <div className="p-8 flex flex-col items-center">
+              {pixData?.isDemo && (
+                <p className="text-[10px] text-amber-600 font-bold text-center mb-4 leading-tight">
+                  Este QR Code é apenas visual. Para receber doações reais, configure as chaves API no Painel Admin.
+                </p>
+              )}
               <div className="bg-white border-8 border-gray-50 p-4 rounded-3xl mb-6 shadow-inner">
-                {pixData?.qrCode ? (
-                  <img src={pixData.qrCode} alt="QR Code PIX" className="w-56 h-56" />
-                ) : (
-                  <div className="w-56 h-56 bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] font-black text-center p-4">
-                    QR CODE GERADO<br/>COPIE O CÓDIGO ABAIXO
-                  </div>
-                )}
+                {pixData?.qrCode && <img src={pixData.qrCode} alt="QR Code PIX" className="w-56 h-56" />}
               </div>
 
               <div className="mb-6 w-full text-center space-y-1">

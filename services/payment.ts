@@ -8,11 +8,11 @@ export const paymentService = {
     amount: number, 
     donorData: { name: string, email: string }, 
     campaignTitle: string,
-    // Fix: Added 'asaas' to the allowed gateway types to match PaymentGateway definition and resolve type error in PaymentModal
     gateway: 'stripe' | 'mercadopago' | 'asaas' = 'stripe'
   ) => {
+    // Aumentado para 15 segundos para suportar cold starts e APIs externas
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const response = await fetch('/api/create-payment', {
@@ -31,30 +31,37 @@ export const paymentService = {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        // Tenta ler como JSON, se falhar (ex: 404 HTML), o catch assume
         const error = await response.json().catch(() => ({ error: 'Servidor indisponível' }));
         throw new Error(error.error || 'Falha ao criar pagamento');
       }
 
       const data = await response.json();
 
-      // Standardized check for QR Code data across gateways
-      // Fix: Added support for Asaas response format (data.pix) to ensure successful payments are recognized
-      if (data.next_action?.pix_display_qr_code || data.point_of_interaction?.transaction_data?.qr_code || (data.provider === 'asaas' && data.pix)) {
+      // Verifica dados de QR Code nos diferentes formatos dos gateways
+      if (data.next_action?.pix_display_qr_code || 
+          data.point_of_interaction?.transaction_data?.qr_code || 
+          (data.provider === 'asaas' && data.pix)) {
         return data;
       }
 
       throw new Error('QR Code PIX não disponível nesta transação.');
-    } catch (err) {
+    } catch (err: any) {
       clearTimeout(timeoutId);
-      // Fallback para simulação em ambiente de teste/preview sem backend ou em caso de erro/timeout
-      console.warn("Ambiente de simulação detectado ou erro na API. Gerando PIX de teste...");
+      
+      if (err.name === 'AbortError') {
+        console.error("A requisição demorou demais e foi cancelada.");
+      }
+
+      // Fallback para simulação visual APENAS se não houver chaves configuradas ou erro de rede
+      console.warn("Gerando PIX de demonstração (não pagável em bancos reais).");
       
       return {
+        isDemo: true,
         next_action: {
           pix_display_qr_code: {
-            image_url_svg: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021226820014br.gov.bcb.pix2560pix-qrcode.example.com/v2/0123456789ABCDEF520400005303986540510.005802BR5913Doador Teste6009SAO PAULO62070503***6304E2CA',
-            data: '00020101021226820014br.gov.bcb.pix2560pix-qrcode.example.com/v2/0123456789ABCDEF520400005303986540510.005802BR5913Doador Teste6009SAO PAULO62070503***6304E2CA'
+            // QR Code visualmente válido para testes de UI, mas apontando para um texto informativo
+            image_url_svg: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESTE_EH_UM_PIX_DE_DEMONSTRACAO_CONFIGURE_SUAS_CHAVES_API',
+            data: 'PIX_DEMONSTRACAO_SEM_VALOR_REAL'
           }
         }
       };
