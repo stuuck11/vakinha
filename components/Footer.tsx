@@ -16,10 +16,9 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
               <li><a href="#" className="hover:text-white">Quem somos</a></li>
               <li><a href="#" className="hover:text-white">Campanhas</a></li>
               <li><a href="#" className="hover:text-white">Criar campanha</a></li>
-              <li><button onClick={onAdminClick} className="hover:text-white text-left">Admin (Login)</button></li>
+              <li><button onClick={onAdminClick} className="hover:text-white text-left">Acesso Principal (Login)</button></li>
               <li><a href="#" className="hover:text-white">Política de privacidade</a></li>
               <li><a href="#" className="hover:text-white">Termos de uso</a></li>
-              <li><a href="#" className="hover:text-white">Verificação de links</a></li>
             </ul>
           </div>
 
@@ -30,7 +29,6 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
               <li><a href="#" className="hover:text-white">Taxas e prazos</a></li>
               <li><a href="#" className="hover:text-white">Segurança e transparência</a></li>
               <li><a href="#" className="hover:text-white">Blog</a></li>
-              <li><a href="#" className="hover:text-white">Busca por recibo</a></li>
             </ul>
           </div>
 
@@ -43,22 +41,15 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             <div className="mt-8">
               <h4 className="font-bold text-sm mb-4 text-gray-500 uppercase tracking-widest">Siga-nos</h4>
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#24CA68] transition-colors cursor-pointer">
-                  <span className="text-xl">f</span>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#24CA68] transition-colors cursor-pointer">
-                  <span className="text-xl">i</span>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#24CA68] transition-colors cursor-pointer">
-                  <span className="text-xl">y</span>
-                </div>
+                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#24CA68] transition-colors cursor-pointer text-xl">f</div>
+                <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#24CA68] transition-colors cursor-pointer text-xl">i</div>
               </div>
             </div>
           </div>
         </div>
 
         <div className="mt-16 pt-8 border-t border-gray-800 text-center text-xs text-gray-500">
-          <p>© 2024 Vakinha Clone - União Solidária. Todos os direitos reservados.</p>
+          <p>© 2024 União Solidária - Projeto Main. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

@@ -24,8 +24,8 @@ export interface DonationConfig {
   id: string;
   campaignId: string;
   mainImage: string;
-  logoUrl?: string; // URL da logo principal
-  sealIcon?: string; // URL do ícone de selos
+  logoUrl?: string;
+  sealIcon?: string;
   category: string;
   title: string;
   subtitle: string;
@@ -47,5 +47,5 @@ export interface DonationConfig {
 export enum Page {
   Home = 'home',
   Contribution = 'contribution',
-  Admin = 'admin'
+  Main = 'main'
 }
