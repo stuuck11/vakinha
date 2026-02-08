@@ -12,14 +12,16 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   const [error, setError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
 
+  // Valores calculados para exibição
+  const upsellsTotal = config.upsells
+    .filter(u => selectedUpsells.includes(u.id))
+    .reduce((acc, curr) => acc + curr.value, 0);
+  
+  const donationBase = baseValue || parseFloat(customValue.replace(/\./g, '').replace(',', '.')) || 0;
+
   useEffect(() => {
-    const upsells = config.upsells
-      .filter(u => selectedUpsells.includes(u.id))
-      .reduce((acc, curr) => acc + curr.value, 0);
-    
-    const base = baseValue || parseFloat(customValue.replace('.', '').replace(',', '.')) || 0;
-    setTotal(base + upsells);
-  }, [baseValue, customValue, selectedUpsells, config]);
+    setTotal(donationBase + upsellsTotal);
+  }, [donationBase, upsellsTotal]);
 
   const handlePresetClick = (val: number) => {
     setBaseValue(val);
@@ -110,11 +112,21 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
              </div>
           </div>
 
-          <div className="pt-4 space-y-3">
+          <div className="pt-4 space-y-2">
              <div className="flex justify-between items-center text-sm font-black text-gray-800 border-t pt-4">
                 <span>Valor Total:</span>
                 <span className="text-2xl text-[#24CA68]">{total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
+             {upsellsTotal > 0 && (
+               <div className="flex flex-col items-end gap-0.5">
+                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                   Doação Base: {donationBase.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                 </p>
+                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                   Turbos: + {upsellsTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                 </p>
+               </div>
+             )}
           </div>
 
           <button 

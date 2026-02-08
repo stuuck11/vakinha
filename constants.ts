@@ -27,7 +27,7 @@ const INITIAL_CAMPAIGN: DonationConfig = {
   beneficiaryName: 'Malak',
   topicTitle: 'Ajude o Malak a lutar pela vida 🐾 💛',
   presetAmounts: [30, 50, 75, 100, 200, 500, 750, 1000],
-  minAmount: 20,
+  minAmount: 5,
   upsells: [
     { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
     { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },

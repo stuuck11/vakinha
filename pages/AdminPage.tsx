@@ -60,7 +60,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       beneficiaryName: 'Beneficiário',
       topicTitle: 'Título do Tópico',
       presetAmounts: [30, 50, 75, 100, 200, 500, 750, 1000],
-      minAmount: 20,
+      minAmount: 5,
       upsells: [
         { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
         { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },

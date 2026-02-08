@@ -12,7 +12,12 @@ export const Header: React.FC<HeaderProps> = ({ onDonateClick }) => {
   return (
     <header className="bg-white border-b sticky top-0 z-50 px-4 py-3">
       <div className="max-w-[640px] mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-1">
+        <a 
+          href="https://www.vakinha.com.br/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 cursor-pointer"
+        >
           {config.logoUrl ? (
             <img src={config.logoUrl} alt="Logo" className="h-8 object-contain" />
           ) : (
@@ -23,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ onDonateClick }) => {
               <span className="font-black text-lg tracking-tighter text-gray-800">Vakinha</span>
             </>
           )}
-        </div>
+        </a>
         
         <button 
           onClick={onDonateClick}
