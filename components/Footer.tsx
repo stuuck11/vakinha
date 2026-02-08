@@ -16,7 +16,7 @@ export const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
               <li><a href="#" className="hover:text-white">Quem somos</a></li>
               <li><a href="#" className="hover:text-white">Campanhas</a></li>
               <li><a href="#" className="hover:text-white">Criar campanha</a></li>
-              <li><button onClick={onAdminClick} className="hover:text-white text-left">Acesso Admin (Login)</button></li>
+              <li><button onClick={onAdminClick} className="hover:text-white text-left">Acessar conta</button></li>
               <li><a href="#" className="hover:text-white">Política de privacidade</a></li>
               <li><a href="#" className="hover:text-white">Termos de uso</a></li>
             </ul>

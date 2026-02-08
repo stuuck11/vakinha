@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 
 // A chave secreta deve ser configurada nas variáveis de ambiente do host (ex: Vercel)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 export default async function handler(req: any, res: any) {
@@ -21,6 +21,9 @@ export default async function handler(req: any, res: any) {
     });
 
     // 2. Criar Payment Intent com PIX
+    // Calculamos o timestamp de expiração (1 hora a partir de agora)
+    const expiresAt = Math.floor(Date.now() / 1000) + 3600;
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Stripe usa centavos
       currency: 'brl',
@@ -29,7 +32,7 @@ export default async function handler(req: any, res: any) {
       description: `Doação para: ${campaignTitle}`,
       payment_method_options: {
         pix: {
-          expires_in: 3600, // 1 hora de validade
+          expires_at: expiresAt,
         },
       },
     });
@@ -38,9 +41,6 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({
       id: paymentIntent.id,
       client_secret: paymentIntent.client_secret,
-      // O Stripe retorna os dados do PIX após a criação se solicitado ou via webhook,
-      // mas para PIX imediato, o frontend usa o client_secret para confirmar.
-      // Simplificaremos retornando os dados necessários diretamente se disponíveis.
       next_action: paymentIntent.next_action
     });
   } catch (err: any) {
