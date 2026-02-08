@@ -1,18 +1,5 @@
 import Stripe from 'stripe';
 
-/**
- * Backend adaptável para Stripe, Mercado Pago ou Asaas
- * Nota: Você deve configurar STRIPE_SECRET_KEY, MERCADO_PAGO_ACCESS_TOKEN 
- * ou ASAAS_API_KEY nas variáveis de ambiente.
- */
-
-// Fix: O erro TS2322 ocorre porque o SDK do Stripe exige uma versão específica da API
-// que corresponda exatamente à versão da biblioteca instalada.
-// Usamos '2025-02-24.acacia' conforme solicitado pelo erro do compilador e 'as any' para prevenir quebras futuras.
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia' as any,
-});
-
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
@@ -21,16 +8,21 @@ export default async function handler(req: any, res: any) {
   try {
     const { amount, name, email, campaignTitle, gateway } = req.body;
 
-    // Lógica ASAAS
+    // Lógica ASAAS (Segura via env)
     if (gateway === 'asaas') {
       const asaasApiKey = process.env.ASAAS_API_KEY;
       
-      // 1. Criar ou identificar cliente (placeholder para doação anônima)
-      const customerResponse = await fetch('https://www.asaas.com/api/v3/customers', {
+      if (!asaasApiKey) {
+        throw new Error('Configuração de servidor ausente: ASAAS_API_KEY não encontrada nas variáveis de ambiente.');
+      }
+
+      const baseUrl = 'https://api.asaas.com/v3';
+      
+      const customerResponse = await fetch(`${baseUrl}/customers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'access_token': asaasApiKey || ''
+          'access_token': asaasApiKey
         },
         body: JSON.stringify({
           name: name || 'Doador Solidário',
@@ -38,35 +30,35 @@ export default async function handler(req: any, res: any) {
         })
       });
       const customerData = await customerResponse.json();
+      if (!customerResponse.ok) throw new Error(customerData.errors?.[0]?.description || 'Erro no Asaas (Cliente)');
+      
       const customerId = customerData.id;
 
-      // 2. Criar Pagamento PIX
-      const paymentResponse = await fetch('https://www.asaas.com/api/v3/payments', {
+      const paymentResponse = await fetch(`${baseUrl}/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'access_token': asaasApiKey || ''
+          'access_token': asaasApiKey
         },
         body: JSON.stringify({
           customer: customerId,
           billingType: 'PIX',
           value: amount,
-          dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // 24h
+          dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
           description: `Doação: ${campaignTitle}`
         })
       });
       const paymentData = await paymentResponse.json();
+      if (!paymentResponse.ok) throw new Error(paymentData.errors?.[0]?.description || 'Erro no Asaas (Pagamento)');
 
-      if (!paymentResponse.ok) throw new Error(paymentData.errors?.[0]?.description || 'Erro no Asaas');
-
-      // 3. Obter QR Code do PIX
-      const qrCodeResponse = await fetch(`https://www.asaas.com/api/v3/payments/${paymentData.id}/pixQrCode`, {
+      const qrCodeResponse = await fetch(`${baseUrl}/payments/${paymentData.id}/pixQrCode`, {
         method: 'GET',
         headers: {
-          'access_token': asaasApiKey || ''
+          'access_token': asaasApiKey
         }
       });
       const qrCodeData = await qrCodeResponse.json();
+      if (!qrCodeResponse.ok) throw new Error('Erro ao obter QR Code do Asaas');
 
       return res.status(200).json({
         provider: 'asaas',
@@ -79,11 +71,14 @@ export default async function handler(req: any, res: any) {
     }
 
     if (gateway === 'mercadopago') {
+      const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+      if (!mpToken) throw new Error('Configuração de servidor ausente: MERCADO_PAGO_ACCESS_TOKEN não configurado.');
+
       const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
+          'Authorization': `Bearer ${mpToken}`,
           'X-Idempotency-Key': `vaquinha-${Date.now()}`
         },
         body: JSON.stringify({
@@ -104,7 +99,14 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json(mpData);
     } 
     
-    // Gateway Padrão: Stripe
+    // Gateway: Stripe
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) throw new Error('Configuração de servidor ausente: STRIPE_SECRET_KEY não configurada.');
+
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: '2025-02-24.acacia' as any,
+    });
+
     const customer = await stripe.customers.create({ name: name || 'Doador', email: email || 'doador@exemplo.com' });
     const expiresAt = Math.floor(Date.now() / 1000) + 3600;
 
@@ -126,7 +128,7 @@ export default async function handler(req: any, res: any) {
     });
     
   } catch (err: any) {
-    console.error(err);
+    console.error('API Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 }

@@ -1,18 +1,17 @@
+import { DonationConfig } from '../types';
 
 /**
- * Generic Payment Service
- * Routes payment creation to the backend based on selected gateway
+ * Generic Payment Service - Secure Version
+ * Strictly client-to-server with NO keys in payload.
  */
 export const paymentService = {
   createPixPayment: async (
     amount: number, 
     donorData: { name: string, email: string }, 
-    campaignTitle: string,
-    gateway: 'stripe' | 'mercadopago' | 'asaas' = 'stripe'
+    campaign: DonationConfig
   ) => {
-    // Aumentado para 15 segundos para suportar cold starts e APIs externas
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
       const response = await fetch('/api/create-payment', {
@@ -22,8 +21,8 @@ export const paymentService = {
           amount,
           name: donorData.name,
           email: donorData.email,
-          campaignTitle,
-          gateway
+          campaignTitle: campaign.title,
+          gateway: campaign.gateway
         }),
         signal: controller.signal
       });
@@ -31,37 +30,35 @@ export const paymentService = {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Servidor indisponível' }));
-        throw new Error(error.error || 'Falha ao criar pagamento');
+        const errorData = await response.json().catch(() => ({ error: 'Servidor indisponível' }));
+        throw new Error(errorData.error || 'Falha ao processar pagamento');
       }
 
       const data = await response.json();
 
-      // Verifica dados de QR Code nos diferentes formatos dos gateways
       if (data.next_action?.pix_display_qr_code || 
           data.point_of_interaction?.transaction_data?.qr_code || 
           (data.provider === 'asaas' && data.pix)) {
         return data;
       }
 
-      throw new Error('QR Code PIX não disponível nesta transação.');
+      throw new Error('O provedor não retornou um QR Code válido.');
     } catch (err: any) {
       clearTimeout(timeoutId);
-      
-      if (err.name === 'AbortError') {
-        console.error("A requisição demorou demais e foi cancelada.");
+      console.error("Payment Error:", err.message);
+
+      // Erros de configuração de servidor são críticos e devem ser mostrados
+      if (err.message.includes('Configuração de servidor ausente')) {
+        throw err;
       }
 
-      // Fallback para simulação visual APENAS se não houver chaves configuradas ou erro de rede
-      console.warn("Gerando PIX de demonstração (não pagável em bancos reais).");
-      
+      // Fallback visual apenas para demonstração local em caso de erro de rede
       return {
         isDemo: true,
         next_action: {
           pix_display_qr_code: {
-            // QR Code visualmente válido para testes de UI, mas apontando para um texto informativo
-            image_url_svg: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESTE_EH_UM_PIX_DE_DEMONSTRACAO_CONFIGURE_SUAS_CHAVES_API',
-            data: 'PIX_DEMONSTRACAO_SEM_VALOR_REAL'
+            image_url_svg: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ERRO_CONFIGURACAO_SERVIDOR_REVISE_ENV_VARS`,
+            data: 'ERRO_DE_CONEXAO_OU_CONFIGURACAO'
           }
         }
       };

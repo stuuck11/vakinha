@@ -19,9 +19,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
   useEffect(() => {
     const initPayment = async () => {
       try {
-        const response = await paymentService.createPixPayment(total, donorData, campaignTitle, config.gateway);
+        // Passamos o config inteiro para que o service pegue as chaves da API
+        const response = await paymentService.createPixPayment(total, donorData, config);
         
-        // Se for modo demo
         if (response.isDemo) {
           setPixData({
             qrCode: response.next_action.pix_display_qr_code.image_url_svg,
@@ -29,21 +29,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
             isDemo: true
           });
         }
-        // Handle Asaas format
         else if (response.provider === 'asaas' && response.pix) {
           setPixData({
             qrCode: `data:image/png;base64,${response.pix.encodedImage}`,
             copyPaste: response.pix.payload
           });
         }
-        // Handle Stripe format
         else if (response.next_action?.pix_display_qr_code) {
           setPixData({
             qrCode: response.next_action.pix_display_qr_code.image_url_svg,
             copyPaste: response.next_action.pix_display_qr_code.data
           });
         } 
-        // Handle Mercado Pago format
         else if (response.point_of_interaction?.transaction_data) {
           const data = response.point_of_interaction.transaction_data;
           setPixData({
@@ -52,15 +49,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
           });
         }
       } catch (err: any) {
-        const errorMsg = err.message || "";
-        setError(<p className="font-black text-red-500">{errorMsg || "Erro ao gerar PIX."}</p>);
-        setTimeout(onClose, 5000);
+        setError(
+          <div className="text-center">
+            <p className="font-black text-red-500 mb-2">Erro na Transação</p>
+            <p className="text-xs text-gray-500 font-bold uppercase">{err.message}</p>
+          </div>
+        );
       } finally {
         setLoading(false);
       }
     };
     initPayment();
-  }, [total, donorData, campaignTitle, onClose, config.gateway]);
+  }, [total, donorData, config]);
 
   const copyToClipboard = () => {
     if (pixData) {
@@ -77,48 +77,38 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center space-y-4">
             <div className="w-12 h-12 border-4 border-[#24CA68] border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-bold text-gray-500 italic">Gerando PIX seguro...</p>
+            <p className="font-bold text-gray-500 italic">Gerando PIX real...</p>
           </div>
         ) : error ? (
           <div className="p-10 text-center space-y-6">
-            <div className="text-5xl">🏦</div>
-            <div className="animate-pulse">{error}</div>
+            <div className="text-5xl">⚠️</div>
+            {error}
             <button onClick={onClose} className="w-full bg-gray-100 py-3 rounded-xl font-black text-gray-500 uppercase text-xs tracking-widest hover:bg-gray-200">Voltar</button>
           </div>
         ) : (
           <>
             <div className="p-6 text-center border-b bg-gray-50/50">
-              {pixData?.isDemo && (
-                <div className="bg-amber-500 text-white text-[10px] font-black py-1 px-4 rounded-full mb-3 uppercase tracking-widest animate-bounce">
-                  Atenção: Modo de Demonstração
-                </div>
-              )}
               <div className="flex justify-center mb-2">
                 <div className="bg-[#24CA68]/10 px-3 py-1 rounded-full flex items-center gap-2">
                    <div className="w-2 h-2 bg-[#24CA68] rounded-full animate-pulse" />
                    <span className="text-[10px] font-black text-[#24CA68] uppercase tracking-widest">
-                     {pixData?.isDemo ? 'Simulação de Pagamento' : 'Aguardando Pagamento'}
+                     {pixData?.isDemo ? 'Modo Demonstração' : 'PIX Oficial Gerado'}
                    </span>
                 </div>
               </div>
               <h2 className="text-xl font-black">Escaneie o QR Code</h2>
               <p className="text-xs text-gray-400 mt-1 font-bold uppercase tracking-tighter">
-                {pixData?.isDemo ? 'DEMO' : `Provedor: ${config.gateway.toUpperCase()}`}
+                {config.gateway.toUpperCase()} • {campaignTitle}
               </p>
             </div>
 
             <div className="p-8 flex flex-col items-center">
-              {pixData?.isDemo && (
-                <p className="text-[10px] text-amber-600 font-bold text-center mb-4 leading-tight">
-                  Este QR Code é apenas visual. Para receber doações reais, configure as chaves API no Painel Admin.
-                </p>
-              )}
               <div className="bg-white border-8 border-gray-50 p-4 rounded-3xl mb-6 shadow-inner">
                 {pixData?.qrCode && <img src={pixData.qrCode} alt="QR Code PIX" className="w-56 h-56" />}
               </div>
 
               <div className="mb-6 w-full text-center space-y-1">
-                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Valor da sua doação</span>
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Valor Total</span>
                 <div className="text-4xl font-black text-gray-900">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total)}
                 </div>
@@ -128,15 +118,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
                 onClick={copyToClipboard}
                 className="w-full bg-[#EEFFE6] border-2 border-[#24CA68]/20 py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-[#24CA68]/10 transition-all active:scale-95 shadow-sm"
               >
-                <span className="font-black text-sm text-[#24CA68]">Copiar Código PIX (Copia e Cola)</span>
+                <span className="font-black text-sm text-[#24CA68]">Copiar Código PIX</span>
               </button>
             </div>
 
-            <div className="p-6 bg-gray-50 flex flex-col gap-4">
-              <div className="flex items-center justify-center gap-2">
-                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ambiente de Doação Seguro</span>
-              </div>
-              <button onClick={onClose} className="w-full py-2 text-xs font-black text-gray-400 hover:text-red-500 transition-colors uppercase tracking-widest">Fechar</button>
+            <div className="p-6 bg-gray-50 flex flex-col gap-4 text-center">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pague no app do seu banco para confirmar</span>
+              <button onClick={onClose} className="w-full py-2 text-xs font-black text-gray-400 hover:text-red-500 transition-colors uppercase tracking-widest">Cancelar</button>
             </div>
           </>
         )}
