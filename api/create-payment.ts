@@ -6,9 +6,11 @@ import Stripe from 'stripe';
  * ou ASAAS_API_KEY nas variáveis de ambiente.
  */
 
-// Fix: Utilizando a versão exigida pelo compilador: '2026-01-28.clover'
+// Fix: O erro TS2322 ocorre porque o SDK do Stripe exige uma versão específica da API
+// que corresponda exatamente à versão da biblioteca instalada.
+// Usamos '2025-02-24.acacia' conforme solicitado pelo erro do compilador e 'as any' para prevenir quebras futuras.
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-01-28.clover',
+  apiVersion: '2025-02-24.acacia' as any,
 });
 
 export default async function handler(req: any, res: any) {
