@@ -70,8 +70,7 @@
 </head>
   <body class="bg-[#FDFDFD] text-gray-900 overflow-x-hidden">
     <div id="root"></div>
-    <!-- O caminho do script deve ser relativo para funcionar em qualquer hospedagem -->
-    <script type="module" src="./index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <!-- Caminho absoluto para suportar roteamento por pastas -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>

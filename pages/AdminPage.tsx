@@ -35,7 +35,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
   };
 
   const handleCopyLink = (camp: DonationConfig) => {
-    const url = `${window.location.origin}${window.location.pathname}#c/${camp.campaignId}`;
+    // Remove o '#' para gerar um link limpo
+    const url = `${window.location.origin}/c/${camp.campaignId}`;
     navigator.clipboard.writeText(url);
     alert('Link de divulgação copiado para a área de transferência!');
   };

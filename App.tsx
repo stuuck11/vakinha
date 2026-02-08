@@ -13,74 +13,69 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Home);
   const [config, setConfig] = useState<DonationConfig>(getActiveCampaign());
 
-  useEffect(() => {
-    const handleHash = () => {
-      const hash = window.location.hash;
-      
-      // Rotas Públicas: #c/ID (Home) ou #p/ID (Pagamento)
-      // Usamos split('?')[0] para ignorar parâmetros de rastreio que o Instagram/Facebook anexam ao hash
-      if (hash.startsWith('#c/')) {
-        const cid = hash.substring(3).split('?')[0];
-        const camp = getCampaignByCid(cid);
-        if (camp) {
-          setConfig(camp);
-          setCurrentPage(Page.Admin); // Visualização Pública da Campanha
-        } else {
-          window.location.hash = '';
-        }
-      } 
-      else if (hash.startsWith('#p/')) {
-        const cid = hash.substring(3).split('?')[0];
-        const camp = getCampaignByCid(cid);
-        if (camp) {
-          setConfig(camp);
-          setCurrentPage(Page.Contribution);
-        } else {
-          window.location.hash = '';
-        }
-      }
-      else if (hash === '#admin' || hash === '#login') {
-        // Rota explícita para o Painel Administrativo
-        setCurrentPage(Page.Home);
-      }
-      else if (hash === '#campaign') {
-        // Legado / Compatibilidade
+  const handleRoute = () => {
+    const path = window.location.pathname;
+    
+    if (path.startsWith('/c/')) {
+      const cid = path.substring(3).split('?')[0];
+      const camp = getCampaignByCid(cid);
+      if (camp) {
+        setConfig(camp);
         setCurrentPage(Page.Admin);
       } else {
-        // Padrão: Se não houver hash ou for desconhecido, mostra a campanha ativa (Visualização Pública)
-        // Isso resolve o problema de redirecionar para o login ao clicar em links com UTMs no Instagram
-        setConfig(getActiveCampaign());
-        setCurrentPage(Page.Admin);
+        window.history.pushState({}, '', '/');
+        handleRoute();
       }
-    };
+    } 
+    else if (path.startsWith('/p/')) {
+      const cid = path.substring(3).split('?')[0];
+      const camp = getCampaignByCid(cid);
+      if (camp) {
+        setConfig(camp);
+        setCurrentPage(Page.Contribution);
+      } else {
+        window.history.pushState({}, '', '/');
+        handleRoute();
+      }
+    }
+    else if (path === '/admin' || path === '/login') {
+      setCurrentPage(Page.Home);
+    }
+    else {
+      setConfig(getActiveCampaign());
+      setCurrentPage(Page.Admin);
+    }
+  };
 
-    handleHash();
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
+  useEffect(() => {
+    handleRoute();
+    window.addEventListener('popstate', handleRoute);
+    return () => window.removeEventListener('popstate', handleRoute);
   }, []);
 
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    handleRoute();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const refreshConfig = () => {
-    // No Dashboard, se houver mudança, recarrega
     if (currentPage === Page.Home) {
       setConfig(getActiveCampaign());
     }
   };
 
   const navigateToDonate = () => {
-    window.location.hash = `#p/${config.campaignId}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo(`/p/${config.campaignId}`);
   };
 
   const navigateToHome = () => {
-    // Redireciona para o painel admin (Acessar Conta)
-    window.location.hash = '#admin';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo('/admin');
   };
 
   const handleViewCampaign = (selectedConfig: DonationConfig) => {
     setConfig(selectedConfig);
-    window.location.hash = `#c/${selectedConfig.campaignId}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo(`/c/${selectedConfig.campaignId}`);
   };
 
   return (
@@ -91,7 +86,7 @@ const App: React.FC = () => {
         {currentPage === Page.Home && (
           <AdminPage 
             onUpdate={refreshConfig} 
-            onBack={() => { window.location.hash = ''; }} 
+            onBack={() => navigateTo('/')} 
             onViewCampaign={handleViewCampaign} 
           />
         )}
@@ -100,7 +95,7 @@ const App: React.FC = () => {
         )}
         {currentPage === Page.Contribution && (
           <ContributionPage onBack={() => {
-            window.location.hash = `#c/${config.campaignId}`;
+            navigateTo(`/c/${config.campaignId}`);
           }} config={config} />
         )}
       </main>
