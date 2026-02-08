@@ -18,18 +18,19 @@ const App: React.FC = () => {
       const hash = window.location.hash;
       
       // Rotas Públicas: #c/ID (Home) ou #p/ID (Pagamento)
+      // Usamos split('?')[0] para ignorar parâmetros de rastreio que o Instagram/Facebook anexam ao hash
       if (hash.startsWith('#c/')) {
-        const cid = hash.substring(3);
+        const cid = hash.substring(3).split('?')[0];
         const camp = getCampaignByCid(cid);
         if (camp) {
           setConfig(camp);
-          setCurrentPage(Page.Admin); // Visualização Pública
+          setCurrentPage(Page.Admin); // Visualização Pública da Campanha
         } else {
           window.location.hash = '';
         }
       } 
       else if (hash.startsWith('#p/')) {
-        const cid = hash.substring(3);
+        const cid = hash.substring(3).split('?')[0];
         const camp = getCampaignByCid(cid);
         if (camp) {
           setConfig(camp);
@@ -38,12 +39,18 @@ const App: React.FC = () => {
           window.location.hash = '';
         }
       }
+      else if (hash === '#admin' || hash === '#login') {
+        // Rota explícita para o Painel Administrativo
+        setCurrentPage(Page.Home);
+      }
       else if (hash === '#campaign') {
         // Legado / Compatibilidade
         setCurrentPage(Page.Admin);
       } else {
-        // Dashboard Admin (Root)
-        setCurrentPage(Page.Home);
+        // Padrão: Se não houver hash ou for desconhecido, mostra a campanha ativa (Visualização Pública)
+        // Isso resolve o problema de redirecionar para o login ao clicar em links com UTMs no Instagram
+        setConfig(getActiveCampaign());
+        setCurrentPage(Page.Admin);
       }
     };
 
@@ -65,9 +72,9 @@ const App: React.FC = () => {
   };
 
   const navigateToHome = () => {
-    setCurrentPage(Page.Home);
+    // Redireciona para o painel admin (Acessar Conta)
+    window.location.hash = '#admin';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    window.location.hash = '';
   };
 
   const handleViewCampaign = (selectedConfig: DonationConfig) => {
@@ -82,7 +89,11 @@ const App: React.FC = () => {
       
       <main className="flex-grow">
         {currentPage === Page.Home && (
-          <AdminPage onUpdate={refreshConfig} onBack={navigateToHome} onViewCampaign={handleViewCampaign} />
+          <AdminPage 
+            onUpdate={refreshConfig} 
+            onBack={() => { window.location.hash = ''; }} 
+            onViewCampaign={handleViewCampaign} 
+          />
         )}
         {currentPage === Page.Admin && (
           <HomePage onDonateClick={navigateToDonate} config={config} />
