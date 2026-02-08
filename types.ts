@@ -46,6 +46,8 @@ export interface DonationConfig {
   supportersCount: number;
   creatorName: string;
   creatorSince: string;
+  beneficiaryName: string;
+  topicTitle: string;
   presetAmounts: number[];
   minAmount: number;
   upsells: UpsellOption[];

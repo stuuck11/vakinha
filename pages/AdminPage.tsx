@@ -57,6 +57,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       supportersCount: 0,
       creatorName: 'Admin',
       creatorSince: new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+      beneficiaryName: 'Beneficiário',
+      topicTitle: 'Título do Tópico',
       presetAmounts: [30, 50, 75, 100, 200, 500, 750, 1000],
       minAmount: 20,
       upsells: [
@@ -176,6 +178,39 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                 <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Título da Campanha" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="História da campanha..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL da Imagem de Capa" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Nome do Beneficiário</span>
+                    <input value={formData.beneficiaryName} onChange={e => setFormData({...formData, beneficiaryName: e.target.value})} placeholder="Ex: Malak" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Título do Tópico</span>
+                    <input value={formData.topicTitle} onChange={e => setFormData({...formData, topicTitle: e.target.value})} placeholder="Ex: Ajude o Malak a lutar..." className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Nome do Criador</span>
+                    <input value={formData.creatorName} onChange={e => setFormData({...formData, creatorName: e.target.value})} placeholder="Ex: Admin" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Ativo desde</span>
+                    <input value={formData.creatorSince} onChange={e => setFormData({...formData, creatorSince: e.target.value})} placeholder="Ex: novembro/2024" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qtd. Corações</span>
+                    <input type="number" value={formData.heartsCount} onChange={e => setFormData({...formData, heartsCount: parseInt(e.target.value) || 0})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qtd. Apoiadores</span>
+                    <input type="number" value={formData.supportersCount} onChange={e => setFormData({...formData, supportersCount: parseInt(e.target.value) || 0})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                  </div>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">

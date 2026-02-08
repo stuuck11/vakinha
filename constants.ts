@@ -24,6 +24,8 @@ const INITIAL_CAMPAIGN: DonationConfig = {
   supportersCount: 368,
   creatorName: 'ONG União Solidária',
   creatorSince: 'novembro/2024',
+  beneficiaryName: 'Malak',
+  topicTitle: 'Ajude o Malak a lutar pela vida 🐾 💛',
   presetAmounts: [30, 50, 75, 100, 200, 500, 750, 1000],
   minAmount: 20,
   upsells: [
@@ -62,7 +64,9 @@ export const getStoredCampaigns = (): DonationConfig[] => {
         mercadopagoConfig: c.mercadopagoConfig || { publicKey: '' },
         asaasConfig: c.asaasConfig || { apiKey: '' },
         logoUrl: c.logoUrl || 'https://imgur.com/NeAZeVi.png',
-        sealIcon: c.sealIcon || 'https://imgur.com/39baGGf.png'
+        sealIcon: c.sealIcon || 'https://imgur.com/39baGGf.png',
+        beneficiaryName: c.beneficiaryName || 'Malak',
+        topicTitle: c.topicTitle || 'Ajude o Malak a lutar pela vida 🐾 💛'
       }));
     } catch (e) {
       return [INITIAL_CAMPAIGN];

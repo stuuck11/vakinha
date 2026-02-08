@@ -78,7 +78,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => 
           <ActionBox />
 
           <div className="space-y-3">
-            <h2 className="text-[13px] font-black text-gray-800">Ajude o Malak a lutar pela vida 🐾 💛</h2>
+            <h2 className="text-[13px] font-black text-gray-800">{config.topicTitle}</h2>
             <p className="text-[12px] text-gray-500 leading-relaxed font-medium line-clamp-3">{config.description}</p>
             <button onClick={scrollToDescription} className="text-[11px] font-bold text-gray-400 hover:text-gray-600">ver tudo</button>
             <div onClick={onDonateClick} className="w-10 h-10 bg-black rounded-xl flex items-center justify-center cursor-pointer transition-all hover:opacity-80">
@@ -92,7 +92,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => 
               Ver selos
             </button>
             <div className="space-y-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase">Vaquinha em benefício do Malak, criada por:</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase">Vaquinha em benefício do {config.beneficiaryName}, criada por:</p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#24CA68]/10 flex items-center justify-center text-lg">💚</div>
                 <div className="flex flex-col">
