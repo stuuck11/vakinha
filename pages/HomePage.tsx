@@ -69,14 +69,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => 
             <div className="h-[3px] w-full bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-[#24CA68] transition-all duration-1000" style={{ width: `${progressPercentage}%` }} />
             </div>
-            <div className="flex items-center justify-between text-[13px]">
+            <div className="flex items-center justify-between text-[16px]">
               <div className="flex items-center gap-1">
                 <span className="font-black text-[#24CA68]">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(config.currentAmount)}
                 </span>
                 <span className="text-gray-400 font-medium">de {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(config.targetAmount)}</span>
               </div>
-              <span className="font-black text-[#24CA68] text-xs">
+              <span className="font-black text-[#24CA68] text-[10px] whitespace-nowrap">
                 {progressPercentage.toFixed(0)}% Arrecadado
               </span>
             </div>
