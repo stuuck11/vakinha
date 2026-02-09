@@ -54,7 +54,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     <div className="bg-white min-h-screen pb-12">
       <div className="max-w-[640px] mx-auto px-4 py-6">
         
-        {/* Cabeçalho redundante removido (X e Logo) conforme solicitado */}
+        {/* Cabeçalho redundante removido conforme solicitado */}
 
         <div className="space-y-1 mb-8">
            <h1 className="text-[22px] font-black text-gray-800 tracking-tight leading-tight">{config.title}</h1>
@@ -119,10 +119,10 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                     onClick={() => toggleUpsell(upsell.id)}
                     className={`p-4 text-center transition-all cursor-pointer border-r last:border-r-0 border-gray-200 ${selectedUpsells.includes(upsell.id) ? 'bg-[#D1F2D1]' : 'bg-white'}`}
                   >
-                    <div className="text-2xl mb-3 flex justify-center">
-                       {upsell.id === 'transporte' && <img src="https://i.ibb.co/3Wf2zL0/car-icon.png" className="w-10" alt="carro" />}
-                       {upsell.id === 'medicacao' && <img src="https://i.ibb.co/5G78m8L/med-icon.png" className="w-10" alt="medicação" />}
-                       {upsell.id === 'cesta' && <img src="https://i.ibb.co/T1H8V20/box-icon.png" className="w-10" alt="cesta básica" />}
+                    <div className="text-2xl mb-3 flex justify-center h-12 items-center">
+                       {upsell.id === 'transporte' && <img src="https://i.ibb.co/3Wf2zL0/car-icon.png" className="h-full object-contain" alt="carro" />}
+                       {upsell.id === 'medicacao' && <img src="https://i.ibb.co/5G78m8L/med-icon.png" className="h-full object-contain" alt="medicação" />}
+                       {upsell.id === 'cesta' && <img src="https://i.ibb.co/T1H8V20/box-icon.png" className="h-full object-contain" alt="cesta básica" />}
                     </div>
                     <p className="text-[11px] font-medium text-gray-700 leading-tight mb-1 h-6 flex items-center justify-center">{upsell.label}</p>
                     <p className="text-[12px] font-black text-gray-400">R$ {upsell.value.toFixed(2)}</p>
@@ -160,19 +160,29 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os <span className="underline">Termos, Taxas e Prazos</span>.
              </p>
 
-             {/* Novo Selo de Segurança de Checkout (Design Badge Preto/Verde) */}
+             {/* Selo de Segurança de Checkout (Design conforme imagem anexada) */}
              <div className="flex justify-center py-4">
-                <div className="inline-flex items-center bg-[#1F1F1F] rounded-r-xl rounded-l-full pr-6 py-1 h-12">
-                   <div className="w-12 h-12 bg-[#008F4C] rounded-full border-[3px] border-white flex items-center justify-center -ml-0.5 shadow-sm">
-                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                   </div>
-                   <div className="flex flex-col ml-3 text-white uppercase font-black text-[10px] leading-[1.1] tracking-wider">
-                      <span>Selo de</span>
-                      <span>Segurança</span>
-                   </div>
-                </div>
+                <img 
+                  src="https://i.ibb.co/PchL4fW/safety-seal.png" 
+                  alt="Selo de Segurança" 
+                  className="h-12 w-auto object-contain"
+                  onError={(e) => {
+                    // Fallback visual caso a imagem falhe
+                    e.currentTarget.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'inline-flex items-center bg-[#1F1F1F] rounded-r-xl rounded-l-full pr-6 py-1 h-12';
+                    fallback.innerHTML = `
+                       <div class="w-12 h-12 bg-[#008F4C] rounded-full border-[3px] border-white flex items-center justify-center -ml-0.5 shadow-sm">
+                          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+                       </div>
+                       <div class="flex flex-col ml-3 text-white uppercase font-black text-[10px] leading-[1.1] tracking-wider">
+                          <span>Selo de</span>
+                          <span>Segurança</span>
+                       </div>
+                    `;
+                    e.currentTarget.parentElement?.appendChild(fallback);
+                  }}
+                />
              </div>
 
              <p className="text-[10px] text-gray-400 leading-normal">
