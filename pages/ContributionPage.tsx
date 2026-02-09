@@ -125,7 +125,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                        {upsell.id === 'cesta' && <img src="https://imgur.com/SYJK8ZR.png" className="h-full object-contain" alt="cesta básica" />}
                     </div>
                     <p className="text-[11px] font-medium text-gray-700 leading-tight mb-1 h-6 flex items-center justify-center">{upsell.label}</p>
-                    <p className="text-[12px] font-black text-gray-400">R$ {upsell.value.toFixed(2)}</p>
+                    <p className="text-[12px] font-black text-gray-500">R$ {upsell.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   </div>
                 ))}
              </div>
@@ -144,7 +144,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                </div>
                {selectedUpsells.length > 0 && (
                  <div className="text-[10px] text-gray-400 font-bold text-right -mt-2 leading-tight">
-                   Doação + {config.upsells.filter(u => selectedUpsells.includes(u.id)).map(u => u.label).join(' + ')}
+                   Doação (R$ {donationBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) + {config.upsells.filter(u => selectedUpsells.includes(u.id)).map(u => `${u.label} (R$ ${u.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`).join(' + ')}
                  </div>
                )}
              </div>
