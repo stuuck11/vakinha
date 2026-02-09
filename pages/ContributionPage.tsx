@@ -54,15 +54,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     <div className="bg-white min-h-screen pb-12">
       <div className="max-w-[640px] mx-auto px-4 py-6">
         
-        {/* Header Identico ao App */}
-        <div className="flex items-center gap-4 mb-6">
-           <button onClick={onBack} className="text-gray-900 transition-colors">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-           </button>
-           <div className="flex-grow flex justify-center -ml-10">
-              <img src={config.logoUrl || 'https://imgur.com/NeAZeVi.png'} alt="Logo" className="h-9 object-contain" />
-           </div>
-        </div>
+        {/* Cabeçalho redundante removido (X e Logo) conforme solicitado */}
 
         <div className="space-y-1 mb-8">
            <h1 className="text-[22px] font-black text-gray-800 tracking-tight leading-tight">{config.title}</h1>
@@ -95,7 +87,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                  className={`relative py-4 border border-gray-300 rounded-xl font-medium text-lg transition-all ${baseValue === amount ? 'border-[#24CA68] bg-[#EEFFE6]/20 text-gray-800' : 'text-gray-700 bg-white'}`}
                >
                  {amount === 50 && (
-                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FF5C39] text-white text-[9px] font-black px-3 py-1 rounded-full whitespace-nowrap shadow-sm uppercase tracking-wider">
+                   <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#FF5C39] text-white text-[7px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm uppercase tracking-wider">
                      Mais escolhido
                    </div>
                  )}
@@ -125,12 +117,12 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                   <div 
                     key={upsell.id}
                     onClick={() => toggleUpsell(upsell.id)}
-                    className={`p-4 text-center transition-all cursor-pointer border-r last:border-r-0 border-gray-200 ${selectedUpsells.includes(upsell.id) ? 'bg-[#EEFFE6]/40' : 'bg-white'}`}
+                    className={`p-4 text-center transition-all cursor-pointer border-r last:border-r-0 border-gray-200 ${selectedUpsells.includes(upsell.id) ? 'bg-[#D1F2D1]' : 'bg-white'}`}
                   >
                     <div className="text-2xl mb-3 flex justify-center">
-                       {upsell.id === 'transporte' && <img src="https://em-content.zobj.net/source/apple/391/automobile_1f697.png" className="w-10" />}
-                       {upsell.id === 'medicacao' && <img src="https://em-content.zobj.net/source/apple/391/pill_1f48a.png" className="w-10" />}
-                       {upsell.id === 'cesta' && <img src="https://em-content.zobj.net/source/apple/391/basket_1f44c.png" className="w-10" />}
+                       {upsell.id === 'transporte' && <img src="https://i.ibb.co/3Wf2zL0/car-icon.png" className="w-10" alt="carro" />}
+                       {upsell.id === 'medicacao' && <img src="https://i.ibb.co/5G78m8L/med-icon.png" className="w-10" alt="medicação" />}
+                       {upsell.id === 'cesta' && <img src="https://i.ibb.co/T1H8V20/box-icon.png" className="w-10" alt="cesta básica" />}
                     </div>
                     <p className="text-[11px] font-medium text-gray-700 leading-tight mb-1 h-6 flex items-center justify-center">{upsell.label}</p>
                     <p className="text-[12px] font-black text-gray-400">R$ {upsell.value.toFixed(2)}</p>
@@ -150,6 +142,11 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                   <span>Total:</span>
                   <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                </div>
+               {selectedUpsells.length > 0 && (
+                 <div className="text-[10px] text-gray-400 font-bold text-right -mt-2 leading-tight">
+                   Doação + {config.upsells.filter(u => selectedUpsells.includes(u.id)).map(u => u.label).join(' + ')}
+                 </div>
+               )}
              </div>
 
              <button 
@@ -163,15 +160,19 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os <span className="underline">Termos, Taxas e Prazos</span>.
              </p>
 
-             {/* Selo de Segurança de Checkout */}
-             <div className="bg-[#F8F9FA] p-4 rounded-xl flex items-center gap-4 border border-gray-100">
-                <div className="bg-[#004A26] p-3 rounded-lg flex flex-col items-center justify-center text-white shrink-0">
-                   <svg className="w-6 h-6 mb-1" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
-                   <span className="text-[7px] font-black uppercase tracking-widest text-center">Selo de Segurança</span>
+             {/* Novo Selo de Segurança de Checkout (Design Badge Preto/Verde) */}
+             <div className="flex justify-center py-4">
+                <div className="inline-flex items-center bg-[#1F1F1F] rounded-r-xl rounded-l-full pr-6 py-1 h-12">
+                   <div className="w-12 h-12 bg-[#008F4C] rounded-full border-[3px] border-white flex items-center justify-center -ml-0.5 shadow-sm">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                   </div>
+                   <div className="flex flex-col ml-3 text-white uppercase font-black text-[10px] leading-[1.1] tracking-wider">
+                      <span>Selo de</span>
+                      <span>Segurança</span>
+                   </div>
                 </div>
-                <p className="text-[11px] text-gray-500 leading-snug">
-                   Garantimos uma <span className="font-bold">experiência segura</span> para todos os nossos doadores.
-                </p>
              </div>
 
              <p className="text-[10px] text-gray-400 leading-normal">
