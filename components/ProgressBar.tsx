@@ -15,13 +15,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ current, target }) => 
       <div className="flex justify-between items-end mb-2">
         <div className="flex flex-col">
           <span className="text-sm text-gray-500 font-medium">Arrecadado</span>
-          <span className="text-xl font-bold text-gray-800">
+          <span className="text-2xl font-black text-gray-800 tracking-tighter">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(current)}
           </span>
         </div>
         <div className="flex flex-col items-end">
           <span className="text-sm text-gray-500 font-medium">Meta</span>
-          <span className="text-lg font-semibold text-gray-400">
+          <span className="text-xl font-bold text-gray-400">
             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(target)}
           </span>
         </div>

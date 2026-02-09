@@ -52,13 +52,20 @@ export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => 
         )}
 
         <div className="px-4 py-4 space-y-6">
+          {/* SEÇÃO COM TAMANHOS DE FONTE RESTAURADOS */}
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{config.category}</span>
-            <h1 className="text-2xl font-black text-gray-800 tracking-tight leading-tight">{config.title}</h1>
-            <p className="text-[11px] font-bold text-gray-400">ID: {config.campaignId}</p>
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest block">
+              {config.category}
+            </span>
+            <h1 className="text-[22px] font-black text-gray-900 tracking-tight leading-tight">
+              {config.title}
+            </h1>
+            <p className="text-[12px] font-bold text-gray-400">
+              ID: {config.campaignId}
+            </p>
           </div>
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-1">
             <div className="h-[3px] w-full bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-[#24CA68] transition-all duration-1000" style={{ width: `${progressPercentage}%` }} />
             </div>

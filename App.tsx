@@ -66,8 +66,6 @@ const App: React.FC = () => {
    */
   const pushRoute = (path: string, replace = false) => {
     try {
-      // O erro "Uncaught" em pushState ocorre quando o ambiente de sandbox (iframe)
-      // bloqueia a alteração da URL do histórico. O try-catch evita que o app trave.
       if (replace) {
         window.history.replaceState({}, '', path);
       } else {
@@ -79,7 +77,9 @@ const App: React.FC = () => {
     
     // Dispara o evento manualmente para o useEffect reagir à mudança de estado
     window.dispatchEvent(new Event('popstate'));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Teleporte imediato para o topo (sem animação suave)
+    window.scrollTo(0, 0);
   };
 
   const navigateToDonate = () => {
