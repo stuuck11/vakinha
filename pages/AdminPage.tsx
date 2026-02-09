@@ -219,6 +219,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                   </div>
                 </div>
 
+                {/* NOVOS CAMPOS: CRIADOR E ATIVO DESDE */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Nome do Criador</span>
+                    <input value={formData.creatorName} onChange={e => setFormData({...formData, creatorName: e.target.value})} className="w-full border p-3 rounded-lg bg-white" placeholder="Ex: Admin" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Ativo(a) desde</span>
+                    <input value={formData.creatorSince} onChange={e => setFormData({...formData, creatorSince: e.target.value})} className="w-full border p-3 rounded-lg bg-white" placeholder="Ex: novembro/2024" />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meta (R$)</span>

@@ -22,7 +22,7 @@ const INITIAL_CAMPAIGN: DonationConfig = {
   currentAmount: 17422.74,
   heartsCount: 471,
   supportersCount: 368,
-  creatorName: 'ONG União Solidária',
+  creatorName: 'Admin',
   creatorSince: 'novembro/2024',
   beneficiaryName: 'Malak',
   topicTitle: 'Ajude o Malak a lutar pela vida 🐾 💛',
@@ -34,7 +34,7 @@ const INITIAL_CAMPAIGN: DonationConfig = {
     { id: 'cesta', label: 'Doar cesta básica', value: 85.00, icon: '🧺' },
   ],
   isActive: true,
-  gateway: 'stripe',
+  gateway: 'asaas', // Alterado para Asaas como padrão para evitar erro de configuração do Stripe
   stripeConfig: {
     publicKey: '',
     isTestMode: true
@@ -60,7 +60,7 @@ export const getStoredCampaigns = (): DonationConfig[] => {
       const parsed = JSON.parse(stored);
       return parsed.map((c: any) => ({
         ...c,
-        gateway: c.gateway || 'stripe',
+        gateway: c.gateway || 'asaas',
         mercadopagoConfig: c.mercadopagoConfig || { publicKey: '' },
         asaasConfig: c.asaasConfig || { apiKey: '' },
         logoUrl: c.logoUrl || 'https://imgur.com/NeAZeVi.png',
