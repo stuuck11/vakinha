@@ -35,10 +35,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
   };
 
   const handleCopyLink = (camp: DonationConfig) => {
-    // Remove o '#' para gerar um link limpo
+    // Link direto sem hash (#) para bio do Instagram
     const url = `${window.location.origin}/c/${camp.campaignId}`;
     navigator.clipboard.writeText(url);
-    alert('Link de divulgação copiado para a área de transferência!');
+    alert('Link de divulgação copiado!');
   };
 
   const handleCreateNew = () => {
@@ -91,7 +91,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza?')) {
+    if (confirm('Tem certeza que deseja excluir esta campanha?')) {
       const updated = campaigns.filter(c => c.id !== id);
       setCampaigns(updated);
       saveCampaigns(updated);
@@ -113,7 +113,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
     setEditingId(null);
     setFormData(null);
     onUpdate();
-    alert('Informações da campanha salvas com sucesso!');
+    alert('Configurações salvas!');
   };
 
   const addSupporter = () => {
@@ -126,18 +126,43 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       time: newSupporter.time || 'há instantes',
       avatarColor: newSupporter.avatarColor || '#F5F5F5'
     };
+    
     if (editingSupporterId) {
-      setFormData({ ...formData, supporters: formData.supporters.map(i => i.id === editingSupporterId ? s : i) });
+      setFormData({ 
+        ...formData, 
+        supporters: formData.supporters.map(i => i.id === editingSupporterId ? s : i) 
+      });
       setEditingSupporterId(null);
     } else {
-      setFormData({ ...formData, supporters: [s, ...formData.supporters] });
+      setFormData({ 
+        ...formData, 
+        supporters: [s, ...formData.supporters] 
+      });
     }
-    setNewSupporter({ name: '', amount: 0, comment: '', time: 'há instantes', avatarColor: '#F5F5F5' });
+    
+    setNewSupporter({ 
+      name: '', 
+      amount: 0, 
+      comment: '', 
+      time: 'há instantes', 
+      avatarColor: '#F5F5F5' 
+    });
   };
 
   const removeSupporter = (id: string) => {
     if (!formData) return;
-    setFormData({ ...formData, supporters: formData.supporters.filter(s => s.id !== id) });
+    setFormData({ 
+      ...formData, 
+      supporters: formData.supporters.filter(s => s.id !== id) 
+    });
+  };
+
+  const startEditSupporter = (supporter: Supporter) => {
+    setEditingSupporterId(supporter.id);
+    setNewSupporter({ ...supporter });
+    // Scroll suave para o formulário de adição
+    const el = document.getElementById('supporter-form');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   if (!isLoggedIn) {
@@ -157,19 +182,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <div className="max-w-6xl mx-auto px-4 py-12 pb-32">
       <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
-        <h1 className="text-3xl font-black text-gray-800 tracking-tighter">Painel de Gerenciamento</h1>
-        <div className="flex gap-3">
-          <button onClick={handleCreateNew} className="bg-[#24CA68] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-100">+ Nova Campanha</button>
+        <div className="flex items-center gap-4">
+           <button onClick={onBack} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+           </button>
+           <h1 className="text-3xl font-black text-gray-800 tracking-tighter">Painel de Gerenciamento</h1>
         </div>
+        <button onClick={handleCreateNew} className="bg-[#24CA68] text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ Nova Campanha</button>
       </div>
 
       {editingId && formData ? (
         <div className="bg-white rounded-3xl border shadow-xl p-8 space-y-8 animate-slide-up">
           <div className="flex justify-between items-center border-b pb-4">
              <h2 className="text-xl font-black text-gray-800">Editando: {formData.title}</h2>
-             <button onClick={() => setEditingId(null)} className="text-red-500 font-bold hover:underline">Fechar Edição</button>
+             <button onClick={() => {setEditingId(null); setEditingSupporterId(null);}} className="text-red-500 font-bold hover:underline">Cancelar</button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -177,160 +205,121 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Informações Gerais</label>
               <div className="space-y-4 p-5 bg-gray-50/30 rounded-2xl border border-gray-100">
                 <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Título da Campanha" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="História da campanha..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="História..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL da Imagem de Capa" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Nome do Beneficiário</span>
-                    <input value={formData.beneficiaryName} onChange={e => setFormData({...formData, beneficiaryName: e.target.value})} placeholder="Ex: Malak" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Beneficiário</span>
+                    <input value={formData.beneficiaryName} onChange={e => setFormData({...formData, beneficiaryName: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Título do Tópico</span>
-                    <input value={formData.topicTitle} onChange={e => setFormData({...formData, topicTitle: e.target.value})} placeholder="Ex: Ajude o Malak a lutar..." className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Título Tópico</span>
+                    <input value={formData.topicTitle} onChange={e => setFormData({...formData, topicTitle: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Nome do Criador</span>
-                    <input value={formData.creatorName} onChange={e => setFormData({...formData, creatorName: e.target.value})} placeholder="Ex: Admin" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meta (R$)</span>
+                    <input type="number" value={formData.targetAmount} onChange={e => setFormData({...formData, targetAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Ativo desde</span>
-                    <input value={formData.creatorSince} onChange={e => setFormData({...formData, creatorSince: e.target.value})} placeholder="Ex: novembro/2024" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Atual (R$)</span>
+                    <input type="number" value={formData.currentAmount} onChange={e => setFormData({...formData, currentAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qtd. Corações</span>
-                    <input type="number" value={formData.heartsCount} onChange={e => setFormData({...formData, heartsCount: parseInt(e.target.value) || 0})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Qtd. Apoiadores</span>
-                    <input type="number" value={formData.supportersCount} onChange={e => setFormData({...formData, supportersCount: parseInt(e.target.value) || 0})} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meta Alvo (R$)</span>
-                   <input type="number" value={formData.targetAmount} onChange={e => setFormData({...formData, targetAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg outline-none focus:border-[#24CA68] bg-white" />
-                </div>
-                <div>
-                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Valor Atual (R$)</span>
-                   <input type="number" value={formData.currentAmount} onChange={e => setFormData({...formData, currentAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg outline-none focus:border-[#24CA68] bg-white" />
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configuração de Pagamento (Seguro)</label>
-              <div className="bg-[#F8FBFF] p-6 rounded-3xl border border-blue-100 space-y-6">
-                 <div className="space-y-2">
-                    <span className="text-[10px] font-black text-blue-900 uppercase">Gateway Ativo para esta Campanha</span>
-                    <select 
-                      value={formData.gateway} 
-                      onChange={e => setFormData({...formData, gateway: e.target.value as PaymentGateway})}
-                      className="w-full p-4 rounded-xl border border-blue-200 focus:border-blue-500 outline-none font-black text-sm bg-white"
-                    >
-                      <option value="asaas">Asaas (Brasil - Recomendado)</option>
-                      <option value="mercadopago">Mercado Pago (Brasil)</option>
-                      <option value="stripe">Stripe (Global)</option>
-                    </select>
-                 </div>
-
-                 <div className="p-5 bg-white rounded-2xl border border-blue-50 space-y-4">
-                    <h4 className="text-xs font-black text-gray-700 uppercase">Segurança do Servidor</h4>
-                    <p className="text-[11px] text-gray-500 leading-relaxed font-bold">
-                      Para sua segurança, os tokens de API não são mais digitados aqui. 
-                      Isso evita que sua chave secreta seja exposta publicamente.
-                    </p>
-                    
-                    <div className="space-y-3">
-                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                          <div className={`w-3 h-3 rounded-full ${formData.gateway === 'asaas' ? 'bg-[#24CA68]' : 'bg-gray-300'}`} />
-                          <div className="flex-1">
-                             <p className="text-[10px] font-black text-gray-700">ASAAS_API_KEY</p>
-                             <p className="text-[9px] text-gray-400 font-bold">Variável de Ambiente no Servidor</p>
-                          </div>
-                       </div>
-                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                          <div className={`w-3 h-3 rounded-full ${formData.gateway === 'mercadopago' ? 'bg-[#24CA68]' : 'bg-gray-300'}`} />
-                          <div className="flex-1">
-                             <p className="text-[10px] font-black text-gray-700">MERCADO_PAGO_ACCESS_TOKEN</p>
-                             <p className="text-[9px] text-gray-400 font-bold">Variável de Ambiente no Servidor</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="mt-4 p-3 bg-blue-50 rounded-xl text-[10px] text-blue-800 font-black flex items-start gap-2">
-                       <span>ℹ️</span>
-                       <span>Certifique-se de configurar as variáveis no painel da sua hospedagem (ex: Vercel Dashboard).</span>
-                    </div>
-                 </div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configuração de Pagamento</label>
+              <div className="bg-[#F8FBFF] p-6 rounded-3xl border border-blue-100 space-y-4">
+                <select 
+                  value={formData.gateway} 
+                  onChange={e => setFormData({...formData, gateway: e.target.value as PaymentGateway})}
+                  className="w-full p-4 rounded-xl border border-blue-200 font-black text-sm bg-white"
+                >
+                  <option value="asaas">Asaas (Recomendado)</option>
+                  <option value="mercadopago">Mercado Pago</option>
+                  <option value="stripe">Stripe</option>
+                </select>
+                <div className="text-[11px] text-gray-500 bg-white p-4 rounded-xl border border-blue-50 leading-relaxed">
+                   As chaves de API devem ser configuradas nas variáveis de ambiente do seu servidor (Vercel/Hosting) para total segurança.
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-8 border-t">
-            <h3 className="font-black text-lg mb-4 text-gray-800">Doadores e Apoio</h3>
+          <div className="pt-4 border-t" id="supporter-form">
+            <h3 className="font-black text-lg mb-4 text-gray-800">Gerenciar Doadores Manuais</h3>
+            
+            {/* Formulário para Adicionar/Editar Doador */}
             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-4 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <input placeholder="Nome do Doador" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="w-full border p-3 rounded-lg bg-white focus:border-[#24CA68] outline-none" />
-                <input type="number" placeholder="Valor (R$)" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white focus:border-[#24CA68] outline-none" />
-                <input placeholder="Tempo (ex: há 2h)" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white focus:border-[#24CA68] outline-none" />
-                <button onClick={addSupporter} className={`w-full py-3 rounded-lg font-black text-white transition-all ${editingSupporterId ? 'bg-orange-500' : 'bg-[#24CA68]'}`}>
-                  {editingSupporterId ? 'Atualizar Doador' : 'Adicionar Doador'}
-                </button>
+                <input placeholder="Nome" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                <input type="number" placeholder="Valor" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
+                <input placeholder="Tempo (Ex: há 2 horas)" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                <div className="flex gap-2">
+                  <button onClick={addSupporter} className={`flex-grow py-3 rounded-lg font-black uppercase text-xs text-white ${editingSupporterId ? 'bg-orange-500' : 'bg-[#24CA68]'}`}>
+                    {editingSupporterId ? 'Atualizar' : 'Adicionar'}
+                  </button>
+                  {editingSupporterId && (
+                    <button onClick={() => {setEditingSupporterId(null); setNewSupporter({name:'', amount:0, comment:'', time:'há instantes', avatarColor:'#F5F5F5'});}} className="px-4 py-3 bg-gray-200 rounded-lg text-gray-500 text-xs font-black uppercase">X</button>
+                  )}
+                </div>
               </div>
+              <textarea placeholder="Comentário (opcional)" value={newSupporter.comment} onChange={e => setNewSupporter({...newSupporter, comment: e.target.value})} className="w-full border p-3 rounded-lg bg-white text-sm" rows={2} />
             </div>
 
-            <div className="max-h-64 overflow-y-auto border rounded-xl divide-y bg-white">
-               {formData.supporters.length > 0 ? formData.supporters.map(s => (
-                 <div key={s.id} className="flex justify-between items-center p-4 hover:bg-gray-50 transition-colors">
-                   <div className="flex flex-col">
-                      <span className="text-sm font-black text-gray-800">{s.name} • R$ {s.amount.toFixed(2)}</span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{s.time}</span>
+            {/* LISTA DE DOADORES JÁ EXISTENTES PARA EDIÇÃO */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Doadores Atuais</label>
+              <div className="max-h-80 overflow-y-auto border-2 border-gray-100 rounded-2xl divide-y bg-white custom-scrollbar">
+                 {formData.supporters && formData.supporters.length > 0 ? formData.supporters.map(s => (
+                   <div key={s.id} className="flex justify-between items-center p-4 hover:bg-gray-50 transition-colors">
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-black text-gray-400" style={{backgroundColor: s.avatarColor}}>{s.name.charAt(0)}</div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black text-gray-800">{s.name} • <span className="text-[#24CA68]">R$ {s.amount.toFixed(2)}</span></span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{s.time}</span>
+                        </div>
+                     </div>
+                     <div className="flex gap-3 text-[10px] font-black uppercase tracking-widest">
+                       <button onClick={() => startEditSupporter(s)} className="text-blue-500 hover:text-blue-700">Editar</button>
+                       <button onClick={() => removeSupporter(s.id)} className="text-red-400 hover:text-red-600">Excluir</button>
+                     </div>
                    </div>
-                   <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest">
-                     <button onClick={() => {setEditingSupporterId(s.id); setNewSupporter(s);}} className="text-blue-500 hover:underline">Editar</button>
-                     <button onClick={() => removeSupporter(s.id)} className="text-red-400 hover:underline">Excluir</button>
-                   </div>
-                 </div>
-               )) : (
-                 <p className="p-8 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">Nenhum doador listado ainda.</p>
-               )}
+                 )) : (
+                   <p className="p-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest italic">Nenhum doador listado ainda nesta campanha.</p>
+                 )}
+              </div>
             </div>
           </div>
 
-          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:brightness-105 transition-all">Salvar Todas Alterações</button>
+          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:scale-[1.01] transition-all">Salvar Tudo</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {campaigns.map(camp => (
-            <div key={camp.id} className={`bg-white border-2 rounded-3xl p-6 space-y-4 shadow-sm transition-all ${camp.isActive ? 'border-[#24CA68] ring-4 ring-green-50' : 'border-gray-100 hover:border-gray-200'}`}>
+            <div key={camp.id} className={`bg-white border-2 rounded-3xl p-6 space-y-4 shadow-sm transition-all ${camp.isActive ? 'border-[#24CA68] ring-4 ring-green-50' : 'border-gray-100'}`}>
               <div className="flex justify-between items-start">
                 <h3 className="font-black truncate text-gray-800 text-lg w-3/4">{camp.title}</h3>
-                {camp.isActive && <span className="bg-[#24CA68] text-white text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-tighter">Ativa</span>}
+                {camp.isActive && <span className="bg-[#24CA68] text-white text-[9px] font-black px-2 py-1 rounded-full uppercase">Ativa</span>}
               </div>
               <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 bg-gray-50 p-2 rounded-lg">
-                 <span>GATEWAY: {camp.gateway.toUpperCase()}</span>
-                 <span className="text-[#24CA68]">ARRECADADO: R$ {camp.currentAmount.toLocaleString('pt-BR')}</span>
+                 <span>{camp.gateway.toUpperCase()}</span>
+                 <span className="text-[#24CA68]">R$ {camp.currentAmount.toLocaleString('pt-BR')}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <button onClick={() => onViewCampaign?.(camp)} className="col-span-2 bg-[#EEFFE6] text-[#24CA68] py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#e4f9da] transition-colors border border-[#24CA68]/20">Visualizar Site</button>
-                <button onClick={() => handleCopyLink(camp)} className="col-span-2 bg-blue-50 text-blue-600 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors border border-blue-200">🔗 Copiar Link de Divulgação</button>
-                <button onClick={() => handleEdit(camp)} className="bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-colors">Configurar</button>
-                <button onClick={() => handleSetActive(camp.id)} className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${camp.isActive ? 'bg-orange-50 text-orange-600 border border-orange-200' : 'bg-[#24CA68] text-white'}`}>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => onViewCampaign?.(camp)} className="col-span-2 bg-[#EEFFE6] text-[#24CA68] py-3 rounded-xl text-[10px] font-black uppercase">Ver Site Público</button>
+                <button onClick={() => handleCopyLink(camp)} className="col-span-2 bg-blue-50 text-blue-600 py-3 rounded-xl text-[10px] font-black uppercase">Copiar Link Divulgação</button>
+                <button onClick={() => handleEdit(camp)} className="bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase">Configurar</button>
+                <button onClick={() => handleSetActive(camp.id)} className={`py-3 rounded-xl text-[10px] font-black uppercase ${camp.isActive ? 'bg-orange-50 text-orange-600' : 'bg-[#24CA68] text-white'}`}>
                   {camp.isActive ? 'Desativar' : 'Ativar'}
                 </button>
               </div>
-              <div className="flex justify-end pt-2 border-t border-gray-50">
-                <button onClick={() => handleDelete(camp.id)} className="p-2 text-red-300 hover:text-red-500 transition-colors text-xs uppercase font-black tracking-widest">Excluir Campanha</button>
-              </div>
+              <button onClick={() => handleDelete(camp.id)} className="w-full text-red-300 hover:text-red-500 text-[10px] uppercase font-black">Excluir</button>
             </div>
           ))}
         </div>
