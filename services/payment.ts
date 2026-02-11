@@ -1,3 +1,4 @@
+
 import { DonationConfig } from '../types';
 
 /**
@@ -6,7 +7,7 @@ import { DonationConfig } from '../types';
 export const paymentService = {
   createPixPayment: async (
     amount: number, 
-    donorData: { name: string, email: string }, 
+    donorData: { name: string, email: string, cpfCnpj: string }, 
     campaign: DonationConfig
   ) => {
     const controller = new AbortController();
@@ -20,6 +21,7 @@ export const paymentService = {
           amount,
           name: donorData.name,
           email: donorData.email,
+          cpfCnpj: donorData.cpfCnpj.replace(/\D/g, ''),
           campaignTitle: campaign.title,
           gateway: campaign.gateway
         }),
@@ -31,11 +33,9 @@ export const paymentService = {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        // Se o servidor respondeu com erro, lançamos esse erro específico
         throw new Error(data.error || 'Falha ao processar pagamento no servidor');
       }
 
-      // Se chegamos aqui, verificamos se o QR Code veio no formato esperado
       if (data.next_action?.pix_display_qr_code || 
           data.point_of_interaction?.transaction_data?.qr_code || 
           (data.provider === 'asaas' && data.pix)) {
@@ -46,7 +46,6 @@ export const paymentService = {
     } catch (err: any) {
       clearTimeout(timeoutId);
       
-      // Se for um erro de abort (timeout) ou erro de rede (fetch failed)
       if (err.name === 'AbortError' || err.message.includes('fetch')) {
         return {
           isDemo: true,
@@ -59,8 +58,6 @@ export const paymentService = {
         };
       }
 
-      // Se for um erro retornado pelo backend (ex: "Conta em análise")
-      // nós relançamos para o componente mostrar na tela
       throw err;
     }
   }

@@ -5,7 +5,7 @@ import { getActiveCampaign } from '../constants';
 
 interface PaymentModalProps {
   total: number;
-  donorData: { name: string, email: string };
+  donorData: { name: string, email: string, cpfCnpj: string };
   campaignTitle: string;
   onClose: () => void;
 }

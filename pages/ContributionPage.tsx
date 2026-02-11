@@ -8,7 +8,10 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   const [customValue, setCustomValue] = useState<string>('');
   const [selectedUpsells, setSelectedUpsells] = useState<string[]>([]);
   const [total, setTotal] = useState<number>(0);
-  const [donorData, setDonorData] = useState({ name: 'Doador Anônimo', email: 'doador@exemplo.com' });
+  
+  // Novos estados para dados do doador
+  const [donorData, setDonorData] = useState({ name: '', email: '', cpfCnpj: '' });
+  
   const [error, setError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
 
@@ -36,6 +39,21 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     setError(null);
   };
 
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 11) {
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2');
+      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    } else {
+      value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+      value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+      value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+      value = value.replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    setDonorData({ ...donorData, cpfCnpj: value });
+  };
+
   const toggleUpsell = (id: string) => {
     setSelectedUpsells(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -47,6 +65,16 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
       setError(`O valor total deve ser de no mínimo R$ ${config.minAmount.toFixed(2)}`);
       return;
     }
+    if (!donorData.name || donorData.name.trim().split(' ').length < 2) {
+      setError("Por favor, insira seu nome completo.");
+      return;
+    }
+    const cleanCpf = donorData.cpfCnpj.replace(/\D/g, '');
+    if (cleanCpf.length < 11) {
+      setError("Por favor, insira um CPF ou CNPJ válido.");
+      return;
+    }
+    setError(null);
     setShowPayment(true);
   };
 
@@ -54,14 +82,43 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     <div className="bg-white min-h-screen pb-12">
       <div className="max-w-[640px] mx-auto px-4 py-6">
         
-        {/* Cabeçalho redundante removido conforme solicitado */}
-
         <div className="space-y-1 mb-8">
            <h1 className="text-[22px] font-black text-gray-800 tracking-tight leading-tight">{config.title}</h1>
            <p className="text-[12px] font-bold text-gray-400">ID: {config.campaignId}</p>
         </div>
 
         <div className="space-y-8">
+          {/* Seção Seus Dados */}
+          <div className="space-y-4">
+             <h3 className="text-base font-black text-gray-800">Seus dados</h3>
+             <div className="grid grid-cols-1 gap-3">
+                <input 
+                  type="text" 
+                  placeholder="Nome completo"
+                  value={donorData.name}
+                  onChange={(e) => setDonorData({...donorData, name: e.target.value})}
+                  className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium"
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="CPF ou CNPJ"
+                    value={donorData.cpfCnpj}
+                    onChange={handleCpfChange}
+                    maxLength={18}
+                    className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium"
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="E-mail (opcional)"
+                    value={donorData.email}
+                    onChange={(e) => setDonorData({...donorData, email: e.target.value})}
+                    className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium"
+                  />
+                </div>
+             </div>
+          </div>
+
           {/* Campo de Valor Principal */}
           <div className="space-y-3">
             <h3 className="text-base font-black text-gray-800">Valor da contribuição</h3>
@@ -75,7 +132,6 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                  className="w-full py-4 px-4 text-xl font-medium focus:outline-none bg-white"
                />
             </div>
-            {error && <p className="text-red-500 text-[11px] font-bold">{error}</p>}
           </div>
 
           {/* Grid de Valores Predefinidos */}
@@ -125,7 +181,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                        {upsell.id === 'cesta' && <img src="https://imgur.com/SYJK8ZR.png" className="h-full object-contain" alt="cesta básica" />}
                     </div>
                     <p className="text-[11px] font-medium text-gray-700 leading-tight mb-1 h-6 flex items-center justify-center">{upsell.label}</p>
-                    <p className="text-[12px] font-black text-gray-500">R$ {upsell.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-[12px] font-black text-gray-400">R$ {upsell.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   </div>
                 ))}
              </div>
@@ -149,6 +205,8 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                )}
              </div>
 
+             {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">{error}</p>}
+
              <button 
                onClick={handleContribute}
                className="w-full bg-[#24CA68] text-white py-5 rounded-lg font-black text-xl shadow-sm active:scale-95 transition-all uppercase tracking-wide"
@@ -160,7 +218,6 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os <span className="underline">Termos, Taxas e Prazos</span>.
              </p>
 
-             {/* NOVO SELO DE SEGURANÇA (BALÃO CINZA #F1F1F1) IDÊNTICO À IMAGEM */}
              <div className="bg-[#F1F1F1] rounded-lg p-3 flex items-center gap-4">
                 <img 
                    src="https://imgur.com/uq2fnTv.png" 

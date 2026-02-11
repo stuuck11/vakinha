@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 
 export default async function handler(req: any, res: any) {
@@ -6,7 +7,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { amount, name, email, campaignTitle, gateway } = req.body;
+    const { amount, name, email, cpfCnpj, campaignTitle, gateway } = req.body;
 
     // Lógica ASAAS (Segura via env)
     if (gateway === 'asaas') {
@@ -18,6 +19,7 @@ export default async function handler(req: any, res: any) {
 
       const baseUrl = 'https://api.asaas.com/v3';
       
+      // Cria ou busca cliente incluindo CPF
       const customerResponse = await fetch(`${baseUrl}/customers`, {
         method: 'POST',
         headers: {
@@ -26,7 +28,8 @@ export default async function handler(req: any, res: any) {
         },
         body: JSON.stringify({
           name: name || 'Doador Solidário',
-          email: email || 'doador@exemplo.com'
+          email: email || 'doador@exemplo.com',
+          cpfCnpj: cpfCnpj
         })
       });
       const customerData = await customerResponse.json();
@@ -89,6 +92,10 @@ export default async function handler(req: any, res: any) {
             email: email || 'doador@exemplo.com',
             first_name: (name || 'Doador').split(' ')[0],
             last_name: (name || '').split(' ').slice(1).join(' ') || 'Solidário',
+            identification: {
+              type: cpfCnpj?.length > 11 ? 'CNPJ' : 'CPF',
+              number: cpfCnpj
+            }
           }
         })
       });
@@ -107,7 +114,12 @@ export default async function handler(req: any, res: any) {
       apiVersion: '2025-02-24.acacia' as any,
     });
 
-    const customer = await stripe.customers.create({ name: name || 'Doador', email: email || 'doador@exemplo.com' });
+    const customer = await stripe.customers.create({ 
+      name: name || 'Doador', 
+      email: email || 'doador@exemplo.com'
+      // Stripe PIX no Brasil não exige CPF obrigatoriamente no objeto Customer para PaymentIntents simples, 
+      // mas é recomendado para conformidade.
+    });
     const expiresAt = Math.floor(Date.now() / 1000) + 3600;
 
     const paymentIntent = await stripe.paymentIntents.create({
