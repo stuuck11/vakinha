@@ -16,32 +16,43 @@ const App: React.FC = () => {
   const [config, setConfig] = useState<DonationConfig>(getActiveCampaign());
   const [allCampaigns, setAllCampaigns] = useState<DonationConfig[]>([]);
 
-  // Listener em tempo real para o Firebase
+  // Listener em tempo real para o Firebase com tratamento de erro robusto
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'campaigns'), (snapshot: QuerySnapshot<DocumentData>) => {
-      const camps: DonationConfig[] = [];
-      snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-        camps.push({ ...doc.data() } as DonationConfig);
-      });
-      
-      if (camps.length > 0) {
-        setAllCampaigns(camps);
-        saveCampaigns(camps); // Sincroniza com localstorage para fallback
+    try {
+      const unsub = onSnapshot(
+        collection(db, 'campaigns'), 
+        (snapshot: QuerySnapshot<DocumentData>) => {
+          const camps: DonationConfig[] = [];
+          snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+            camps.push({ ...doc.data() } as DonationConfig);
+          });
+          
+          if (camps.length > 0) {
+            setAllCampaigns(camps);
+            saveCampaigns(camps); // Sincroniza com localstorage para fallback
 
-        // Se estivermos na home/admin, atualiza a campanha ativa
-        const path = window.location.pathname;
-        if (!path.startsWith('/c/') && !path.startsWith('/p/')) {
-          const active = camps.find(c => c.isActive) || camps[0];
-          setConfig(active);
-        } else {
-          // Se estiver em uma campanha específica, atualiza os dados dela se ela mudou
-          const cid = path.split('/')[2];
-          const current = camps.find(c => c.campaignId === cid || c.id === cid);
-          if (current) setConfig(current);
+            // Se estivermos na home/admin, atualiza a campanha ativa
+            const path = window.location.pathname;
+            if (!path.startsWith('/c/') && !path.startsWith('/p/')) {
+              const active = camps.find(c => c.isActive) || camps[0];
+              setConfig(active);
+            } else {
+              // Se estiver em uma campanha específica, atualiza os dados dela se ela mudou
+              const cid = path.split('/')[2];
+              const current = camps.find(c => c.campaignId === cid || c.id === cid);
+              if (current) setConfig(current);
+            }
+          }
+        },
+        (error) => {
+          console.error("Erro no Firestore (Database possivelmente não criada):", error);
+          console.warn("Utilizando dados do LocalStorage como fallback.");
         }
-      }
-    });
-    return () => unsub();
+      );
+      return () => unsub();
+    } catch (e) {
+      console.error("Falha ao iniciar listener do Firestore:", e);
+    }
   }, []);
 
   // Inicializa o Pixel quando a config mudar
