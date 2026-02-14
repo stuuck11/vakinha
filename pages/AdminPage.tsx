@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DonationConfig, Supporter, PaymentGateway } from '../types';
 import { saveCampaigns, getStoredCampaigns } from '../constants';
@@ -232,6 +233,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                   <div>
                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Atual (R$)</span>
                     <input type="number" value={formData.currentAmount} onChange={e => setFormData({...formData, currentAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Corações Recebidos</span>
+                    <input type="number" value={formData.heartsCount} onChange={e => setFormData({...formData, heartsCount: parseInt(e.target.value) || 0})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Total Apoiadores</span>
+                    <input type="number" value={formData.supportersCount} onChange={e => setFormData({...formData, supportersCount: parseInt(e.target.value) || 0})} className="w-full border p-3 rounded-lg bg-white" />
                   </div>
                 </div>
               </div>
