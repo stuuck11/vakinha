@@ -358,13 +358,6 @@ service cloud.firestore {
                   </select>
                 </div>
 
-                {formData.gateway === 'asaas' && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-blue-500 uppercase">API Key Asaas</span>
-                    <input value={formData.asaasConfig?.apiKey || ''} onChange={e => setFormData({...formData, asaasConfig: { apiKey: e.target.value }})} className="w-full border p-3 rounded-lg bg-blue-50/30" />
-                  </div>
-                )}
-
                 <div className="space-y-1 border-t pt-3">
                   <span className="text-[10px] font-black text-red-500 uppercase">Facebook Pixel ID</span>
                   <input value={formData.metaPixelId || ''} onChange={e => setFormData({...formData, metaPixelId: e.target.value})} className="w-full border p-3 rounded-lg bg-red-50/10" />
