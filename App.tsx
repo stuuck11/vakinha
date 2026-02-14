@@ -9,7 +9,7 @@ import { AdminPage } from './pages/AdminPage';
 import { StickyDonateButton } from './components/StickyDonateButton';
 import { getActiveCampaign, getCampaignByCid, saveCampaigns } from './constants';
 import { db } from './firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Admin); 
@@ -18,9 +18,9 @@ const App: React.FC = () => {
 
   // Listener em tempo real para o Firebase
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'campaigns'), (snapshot) => {
+    const unsub = onSnapshot(collection(db, 'campaigns'), (snapshot: QuerySnapshot<DocumentData>) => {
       const camps: DonationConfig[] = [];
-      snapshot.forEach((doc) => {
+      snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
         camps.push({ ...doc.data() } as DonationConfig);
       });
       
