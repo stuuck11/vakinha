@@ -2,133 +2,145 @@
 import Stripe from 'stripe';
 
 export default async function handler(req: any, res: any) {
-  // Verificação de Status (GET)
-  if (req.method === 'GET') {
-    const { id, gateway } = req.query;
-    
-    try {
-      if (gateway === 'asaas') {
-        const asaasApiKey = process.env.ASAAS_API_KEY;
-        const response = await fetch(`https://api.asaas.com/v3/payments/${id}`, {
-          headers: { 'access_token': asaasApiKey || '' }
-        });
-        const data = await response.json();
-        const isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(data.status);
-        return res.status(200).json({ status: data.status, isPaid });
-      }
-
-      if (gateway === 'mercadopago') {
-        const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-        const response = await fetch(`https://api.mercadopago.com/v1/payments/${id}`, {
-          headers: { 'Authorization': `Bearer ${mpToken}` }
-        });
-        const data = await response.json();
-        const isPaid = data.status === 'approved';
-        return res.status(200).json({ status: data.status, isPaid });
-      }
-
-      if (gateway === 'pixup') {
-        const pixupKey = process.env.PIXUP_API_KEY;
-        // Simulação de endpoint PixUp para consulta de status
-        const response = await fetch(`https://api.pixup.com/v1/status/${id}`, {
-          headers: { 'Authorization': `Bearer ${pixupKey}` }
-        });
-        const data = await response.json();
-        const isPaid = data.status === 'paid' || data.status === 'completed';
-        return res.status(200).json({ status: data.status, isPaid });
-      }
-
-      return res.status(400).json({ error: 'Gateway não suportado para verificação' });
-    } catch (err: any) {
-      return res.status(500).json({ error: err.message });
-    }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método não permitido' });
   }
 
-  // Criação de Pagamento (POST)
-  if (req.method === 'POST') {
-    try {
-      const { amount, name, email, cpfCnpj, campaignTitle, gateway } = req.body;
+  try {
+    const { amount, name, email, cpfCnpj, campaignTitle, gateway } = req.body;
 
-      if (gateway === 'asaas') {
-        const asaasApiKey = process.env.ASAAS_API_KEY;
-        if (!asaasApiKey) throw new Error('ASAAS_API_KEY ausente');
-        const baseUrl = 'https://api.asaas.com/v3';
-        const customerResponse = await fetch(`${baseUrl}/customers`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
-          body: JSON.stringify({ name, email, cpfCnpj })
-        });
-        const customerData = await customerResponse.json();
-        const paymentResponse = await fetch(`${baseUrl}/payments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
-          body: JSON.stringify({
-            customer: customerData.id,
-            billingType: 'PIX',
-            value: amount,
-            dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-            description: `Doação: ${campaignTitle}`
-          })
-        });
-        const paymentData = await paymentResponse.json();
-        const qrCodeResponse = await fetch(`${baseUrl}/payments/${paymentData.id}/pixQrCode`, {
-          headers: { 'access_token': asaasApiKey }
-        });
-        const qrCodeData = await qrCodeResponse.json();
-        return res.status(200).json({
-          provider: 'asaas',
-          id: paymentData.id,
-          pix: { encodedImage: qrCodeData.encodedImage, payload: qrCodeData.payload }
-        });
+    // Lógica ASAAS (Segura via env)
+    if (gateway === 'asaas') {
+      const asaasApiKey = process.env.ASAAS_API_KEY;
+      
+      if (!asaasApiKey) {
+        throw new Error('Configuração de servidor ausente: ASAAS_API_KEY não encontrada nas variáveis de ambiente.');
       }
 
-      if (gateway === 'mercadopago') {
-        const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-        const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${mpToken}`,
-            'X-Idempotency-Key': `v-${Date.now()}`
-          },
-          body: JSON.stringify({
-            transaction_amount: Number(amount),
-            description: `Doação: ${campaignTitle}`,
-            payment_method_id: 'pix',
-            payer: {
-              email: email || 'doador@exemplo.com',
-              identification: { type: 'CPF', number: cpfCnpj }
-            }
-          })
-        });
-        const mpData = await mpResponse.json();
-        return res.status(200).json(mpData);
-      }
+      const baseUrl = 'https://api.asaas.com/v3';
+      
+      // Cria ou busca cliente incluindo CPF
+      const customerResponse = await fetch(`${baseUrl}/customers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': asaasApiKey
+        },
+        body: JSON.stringify({
+          name: name || 'Doador Solidário',
+          email: email || 'doador@exemplo.com',
+          cpfCnpj: cpfCnpj
+        })
+      });
+      const customerData = await customerResponse.json();
+      if (!customerResponse.ok) throw new Error(customerData.errors?.[0]?.description || 'Erro no Asaas (Cliente)');
+      
+      const customerId = customerData.id;
 
-      if (gateway === 'pixup') {
-        const pixupKey = process.env.PIXUP_API_KEY;
-        // Simulação de endpoint PixUp para criação de PIX
-        const pixupResponse = await fetch('https://api.pixup.com/v1/pix', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pixupKey}` },
-          body: JSON.stringify({
-            value: amount,
-            payer_name: name,
-            payer_tax_id: cpfCnpj,
-            description: `Doação: ${campaignTitle}`
-          })
-        });
-        const pixupData = await pixupResponse.json();
-        return res.status(200).json({
-          provider: 'pixup',
-          id: pixupData.id,
-          pix: { encodedImage: pixupData.qr_code_base64, payload: pixupData.copy_paste }
-        });
-      }
+      const paymentResponse = await fetch(`${baseUrl}/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': asaasApiKey
+        },
+        body: JSON.stringify({
+          customer: customerId,
+          billingType: 'PIX',
+          value: amount,
+          dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          description: `Doação: ${campaignTitle}`
+        })
+      });
+      const paymentData = await paymentResponse.json();
+      if (!paymentResponse.ok) throw new Error(paymentData.errors?.[0]?.description || 'Erro no Asaas (Pagamento)');
 
-      return res.status(400).json({ error: 'Gateway inválido' });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      const qrCodeResponse = await fetch(`${baseUrl}/payments/${paymentData.id}/pixQrCode`, {
+        method: 'GET',
+        headers: {
+          'access_token': asaasApiKey
+        }
+      });
+      const qrCodeData = await qrCodeResponse.json();
+      if (!qrCodeResponse.ok) throw new Error('Erro ao obter QR Code do Asaas');
+
+      return res.status(200).json({
+        provider: 'asaas',
+        id: paymentData.id,
+        pix: {
+          encodedImage: qrCodeData.encodedImage,
+          payload: qrCodeData.payload
+        }
+      });
     }
+
+    if (gateway === 'mercadopago') {
+      const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+      if (!mpToken) throw new Error('Configuração de servidor ausente: MERCADO_PAGO_ACCESS_TOKEN não configurado.');
+
+      const mpResponse = await fetch('https://api.mercadopago.com/v1/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${mpToken}`,
+          'X-Idempotency-Key': `vaquinha-${Date.now()}`
+        },
+        body: JSON.stringify({
+          transaction_amount: Number(amount),
+          description: `Doação: ${campaignTitle}`,
+          payment_method_id: 'pix',
+          payer: {
+            email: email || 'doador@exemplo.com',
+            first_name: (name || 'Doador').split(' ')[0],
+            last_name: (name || '').split(' ').slice(1).join(' ') || 'Solidário',
+            identification: {
+              type: cpfCnpj?.length > 11 ? 'CNPJ' : 'CPF',
+              number: cpfCnpj
+            }
+          }
+        })
+      });
+
+      const mpData = await mpResponse.json();
+      if (!mpResponse.ok) throw new Error(mpData.message || 'Erro no Mercado Pago');
+
+      return res.status(200).json(mpData);
+    } 
+    
+    // Gateway: Stripe
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) throw new Error('Configuração de servidor ausente: STRIPE_SECRET_KEY não configurada.');
+
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: '2025-02-24.acacia' as any,
+    });
+
+    const customer = await stripe.customers.create({ 
+      name: name || 'Doador', 
+      email: email || 'doador@exemplo.com'
+      // Stripe PIX no Brasil não exige CPF obrigatoriamente no objeto Customer para PaymentIntents simples, 
+      // mas é recomendado para conformidade.
+    });
+    const expiresAt = Math.floor(Date.now() / 1000) + 3600;
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100),
+      currency: 'brl',
+      customer: customer.id,
+      payment_method_types: ['pix'],
+      description: `Doação para: ${campaignTitle}`,
+      payment_method_options: {
+        pix: { expires_at: expiresAt },
+      },
+    });
+
+    res.status(200).json({
+      id: paymentIntent.id,
+      client_secret: paymentIntent.client_secret,
+      next_action: paymentIntent.next_action
+    });
+    
+  } catch (err: any) {
+    console.error('API Error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 }

@@ -68,11 +68,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       ],
       isActive: false,
       supporters: [],
-      gateway: 'pixup',
+      gateway: 'asaas',
       stripeConfig: { publicKey: '', isTestMode: true },
       mercadopagoConfig: { publicKey: '' },
       asaasConfig: { apiKey: '' },
-      pixupConfig: { apiKey: '' },
       metaPixelId: ''
     };
     setEditingId(newCamp.id);
@@ -89,6 +88,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
     setCampaigns(updated);
     saveCampaigns(updated);
     onUpdate();
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta campanha?')) {
+      const updated = campaigns.filter(c => c.id !== id);
+      setCampaigns(updated);
+      saveCampaigns(updated);
+      onUpdate();
+    }
   };
 
   const handleSaveForm = () => {
@@ -134,6 +142,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
     setNewSupporter({ name: '', amount: 0, comment: '', time: 'há instantes', avatarColor: '#F5F5F5' });
   };
 
+  const removeSupporter = (id: string) => {
+    if (!formData) return;
+    setFormData({ ...formData, supporters: formData.supporters.filter(s => s.id !== id) });
+  };
+
+  const startEditSupporter = (supporter: Supporter) => {
+    setEditingSupporterId(supporter.id);
+    setNewSupporter({ ...supporter });
+    const el = document.getElementById('supporter-form');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -166,7 +186,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
         <div className="bg-white rounded-3xl border shadow-xl p-8 space-y-8 animate-slide-up">
           <div className="flex justify-between items-center border-b pb-4">
              <h2 className="text-xl font-black text-gray-800">Editando: {formData.title}</h2>
-             <button onClick={() => {setEditingId(null);}} className="text-red-500 font-bold hover:underline">Cancelar</button>
+             <button onClick={() => {setEditingId(null); setEditingSupporterId(null);}} className="text-red-500 font-bold hover:underline">Cancelar</button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -176,10 +196,45 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                 <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Título da Campanha" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="História..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL da Imagem de Capa" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Beneficiário</span>
+                    <input value={formData.beneficiaryName} onChange={e => setFormData({...formData, beneficiaryName: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Título Tópico</span>
+                    <input value={formData.topicTitle} onChange={e => setFormData({...formData, topicTitle: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Meta (R$)</span>
+                    <input type="number" value={formData.targetAmount} onChange={e => setFormData({...formData, targetAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Atual (R$)</span>
+                    <input type="number" value={formData.currentAmount} onChange={e => setFormData({...formData, currentAmount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="space-y-6">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Marketing e Checkout</label>
+              <div className="bg-[#FFF9F9] p-6 rounded-3xl border border-red-50 space-y-4">
+                <div>
+                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">ID do Pixel do Meta Ads</span>
+                   <input 
+                     value={formData.metaPixelId || ''} 
+                     onChange={e => setFormData({...formData, metaPixelId: e.target.value})} 
+                     placeholder="Ex: 123456789012345"
+                     className="w-full border p-4 rounded-xl bg-white outline-none focus:border-red-400 font-bold" 
+                   />
+                </div>
+              </div>
+
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Configuração de Pagamento</label>
               <div className="bg-[#F8FBFF] p-6 rounded-3xl border border-blue-100 space-y-4">
                 <select 
@@ -188,22 +243,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                   className="w-full p-4 rounded-xl border border-blue-200 font-black text-sm bg-white"
                 >
                   <option value="asaas">Asaas (Recomendado)</option>
-                  <option value="pixup">PixUp (Novo)</option>
                   <option value="mercadopago">Mercado Pago</option>
                   <option value="stripe">Stripe</option>
                 </select>
+              </div>
+            </div>
+          </div>
 
-                {formData.gateway === 'pixup' && (
-                  <div className="pt-2 animate-slide-up">
-                    <span className="text-[10px] font-black text-blue-400 uppercase block mb-1">API Key PixUp</span>
-                    <input 
-                      value={formData.pixupConfig?.apiKey || ''} 
-                      onChange={e => setFormData({...formData, pixupConfig: { apiKey: e.target.value }})} 
-                      className="w-full border p-3 rounded-lg bg-white text-xs font-mono" 
-                      placeholder="Coloque sua chave PixUp"
-                    />
-                  </div>
-                )}
+          <div className="pt-4 border-t" id="supporter-form">
+            <h3 className="font-black text-lg mb-4 text-gray-800">Doadores Manuais</h3>
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input placeholder="Nome" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                <input type="number" placeholder="Valor" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
+                <input placeholder="Tempo" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                <button onClick={addSupporter} className={`py-3 rounded-lg font-black uppercase text-xs text-white ${editingSupporterId ? 'bg-orange-500' : 'bg-[#24CA68]'}`}>
+                  {editingSupporterId ? 'Atualizar' : 'Adicionar'}
+                </button>
               </div>
             </div>
           </div>
@@ -220,6 +276,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => onViewCampaign?.(camp)} className="col-span-2 bg-[#EEFFE6] text-[#24CA68] py-3 rounded-xl text-[10px] font-black uppercase">Ver Site Público</button>
+                <button onClick={() => handleCopyLink(camp)} className="col-span-2 bg-blue-50 text-blue-600 py-3 rounded-xl text-[10px] font-black uppercase">Copiar Link Divulgação</button>
                 <button onClick={() => handleEdit(camp)} className="bg-gray-50 py-3 rounded-xl text-[10px] font-black uppercase">Configurar</button>
                 <button onClick={() => handleSetActive(camp.id)} className={`py-3 rounded-xl text-[10px] font-black uppercase ${camp.isActive ? 'bg-orange-50 text-orange-600' : 'bg-[#24CA68] text-white'}`}>
                   {camp.isActive ? 'Desativar' : 'Ativar'}
