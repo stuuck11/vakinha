@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DonationConfig } from '../types';
 import { PaymentModal } from '../components/PaymentModal';
@@ -79,6 +78,13 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     setShowPayment(true);
   };
 
+  const itemsSummary = [
+    `Doação (${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(donationBase)})`,
+    ...config.upsells
+      .filter(u => selectedUpsells.includes(u.id))
+      .map(u => `${u.label} (${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(u.value)})`)
+  ].join(' + ');
+
   return (
     <div className="bg-white min-h-screen pb-12">
       <div className="max-w-[640px] mx-auto px-4 py-6">
@@ -143,6 +149,9 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                   <span>Total:</span>
                   <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                </div>
+               <p className="text-[10px] text-gray-400 font-bold leading-relaxed text-right">
+                 {itemsSummary}
+               </p>
              </div>
 
              {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">{error}</p>}
