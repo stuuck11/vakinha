@@ -68,10 +68,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       ],
       isActive: false,
       supporters: [],
-      gateway: 'asaas',
+      gateway: 'pixup',
       stripeConfig: { publicKey: '', isTestMode: true },
       mercadopagoConfig: { publicKey: '' },
       asaasConfig: { apiKey: '' },
+      pixupConfig: { apiKey: '' },
       metaPixelId: ''
     };
     setEditingId(newCamp.id);
@@ -195,8 +196,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
               <div className="space-y-4 p-5 bg-gray-50/30 rounded-2xl border border-gray-100">
                 <input value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Título da Campanha" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="História..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
-                <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL da Imagem de Capa" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 
+                <div>
+                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">URL da Imagem de Capa (Recomendado: 1000x562px - 16:9)</span>
+                   <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL da Imagem" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Nome do Criador</span>
+                    <input value={formData.creatorName} onChange={e => setFormData({...formData, creatorName: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Ativo desde</span>
+                    <input value={formData.creatorSince} onChange={e => setFormData({...formData, creatorSince: e.target.value})} placeholder="Ex: novembro/2024" className="w-full border p-3 rounded-lg bg-white" />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Beneficiário</span>
@@ -242,10 +258,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                   onChange={e => setFormData({...formData, gateway: e.target.value as PaymentGateway})}
                   className="w-full p-4 rounded-xl border border-blue-200 font-black text-sm bg-white"
                 >
+                  <option value="pixup">PixUp (Padrão)</option>
                   <option value="asaas">Asaas (Recomendado)</option>
                   <option value="mercadopago">Mercado Pago</option>
                   <option value="stripe">Stripe</option>
                 </select>
+
+                {formData.gateway === 'pixup' && (
+                  <div>
+                    <span className="text-[10px] font-black text-blue-400 uppercase block mb-1">Chave API PixUp</span>
+                    <input 
+                      value={formData.pixupConfig?.apiKey || ''} 
+                      onChange={e => setFormData({...formData, pixupConfig: { apiKey: e.target.value }})} 
+                      placeholder="Sua API Key"
+                      className="w-full border p-3 rounded-lg bg-white outline-none focus:border-blue-400" 
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -253,18 +282,50 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
           <div className="pt-4 border-t" id="supporter-form">
             <h3 className="font-black text-lg mb-4 text-gray-800">Doadores Manuais</h3>
             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-4 mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input placeholder="Nome" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
                 <input type="number" placeholder="Valor" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="w-full border p-3 rounded-lg bg-white" />
-                <input placeholder="Tempo" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
-                <button onClick={addSupporter} className={`py-3 rounded-lg font-black uppercase text-xs text-white ${editingSupporterId ? 'bg-orange-500' : 'bg-[#24CA68]'}`}>
-                  {editingSupporterId ? 'Atualizar' : 'Adicionar'}
-                </button>
+                <input placeholder="Tempo (ex: há 2 horas)" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input placeholder="Comentário (opcional)" value={newSupporter.comment} onChange={e => setNewSupporter({...newSupporter, comment: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
+                <div className="flex gap-2 items-center">
+                   <span className="text-xs font-bold text-gray-400 uppercase">Cor:</span>
+                   <input type="color" value={newSupporter.avatarColor} onChange={e => setNewSupporter({...newSupporter, avatarColor: e.target.value})} className="h-10 w-20 border rounded" />
+                   <button onClick={addSupporter} className={`flex-grow py-3 rounded-lg font-black uppercase text-xs text-white ${editingSupporterId ? 'bg-orange-500' : 'bg-[#24CA68]'}`}>
+                     {editingSupporterId ? 'Atualizar Doador' : 'Adicionar Doador'}
+                   </button>
+                   {editingSupporterId && (
+                     <button onClick={() => {setEditingSupporterId(null); setNewSupporter({name: '', amount: 0, comment: '', time: 'há instantes', avatarColor: '#F5F5F5'});}} className="bg-gray-200 p-3 rounded-lg text-gray-600">Cancelar</button>
+                   )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {formData.supporters.map(s => (
+                 <div key={s.id} className="bg-white border p-4 rounded-xl flex items-center justify-between shadow-sm">
+                   <div className="flex items-center gap-3">
+                     <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-gray-600" style={{backgroundColor: s.avatarColor}}>{s.name.charAt(0)}</div>
+                     <div>
+                       <p className="font-black text-sm text-gray-800">{s.name}</p>
+                       <p className="text-xs font-bold text-[#24CA68]">R$ {s.amount.toFixed(2)} • {s.time}</p>
+                     </div>
+                   </div>
+                   <div className="flex gap-2">
+                     <button onClick={() => startEditSupporter(s)} className="text-blue-500 hover:bg-blue-50 p-2 rounded">
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                     </button>
+                     <button onClick={() => removeSupporter(s.id)} className="text-red-500 hover:bg-red-50 p-2 rounded">
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                     </button>
+                   </div>
+                 </div>
+               ))}
             </div>
           </div>
 
-          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:scale-[1.01] transition-all">Salvar Tudo</button>
+          <button onClick={handleSaveForm} className="w-full bg-[#24CA68] text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:scale-[1.01] transition-all">Salvar Todas as Alterações</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
