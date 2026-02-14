@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DonationConfig, Supporter, PaymentGateway } from '../types';
 import { saveCampaigns, getStoredCampaigns } from '../constants';
@@ -86,7 +85,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
   };
 
   const handleSetActive = (id: string) => {
-    const updated = campaigns.map(c => c.id === id ? { ...c, isActive: !c.isActive } : c);
+    const updated = campaigns.map(c => c.id === id ? { ...c, isActive: !c.isActive } : { ...c, isActive: false });
     setCampaigns(updated);
     saveCampaigns(updated);
     onUpdate();
@@ -199,7 +198,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                 <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="História..." rows={4} className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 
                 <div>
-                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">URL da Imagem de Capa (Recomendado: 1000x562px - 16:9)</span>
+                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">URL da Imagem de Capa</span>
                    <input value={formData.mainImage} onChange={e => setFormData({...formData, mainImage: e.target.value})} placeholder="URL da Imagem" className="w-full border p-3 rounded-lg bg-white outline-none focus:border-[#24CA68]" />
                 </div>
 
@@ -257,7 +256,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                      placeholder="EAAB..."
                      className="w-full border p-4 rounded-xl bg-white outline-none focus:border-red-400 font-bold" 
                    />
-                   <p className="text-[9px] text-gray-400 mt-2 italic font-medium">Necessário para eventos server-side (InitiateCheckout, Purchase)</p>
                 </div>
               </div>
 
@@ -298,4 +296,88 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                 <input placeholder="Tempo (ex: há 2 horas)" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="w-full border p-3 rounded-lg bg-white" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
+                <input placeholder="Comentário (opcional)" value={newSupporter.comment} onChange={e => setNewSupporter({...newSupporter, comment: e.target.value})} className="w-full border p-3 rounded-lg bg-white col-span-1" />
+                <button onClick={addSupporter} className="bg-black text-white py-3 rounded-lg font-bold">{editingSupporterId ? 'Atualizar Doador' : 'Adicionar Doador'}</button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {(formData.supporters || []).map(s => (
+                <div key={s.id} className="flex items-center justify-between p-4 bg-white border rounded-xl">
+                  <div>
+                    <p className="font-bold text-gray-800">{s.name} - R$ {s.amount.toFixed(2)}</p>
+                    <p className="text-xs text-gray-400">{s.time}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => startEditSupporter(s)} className="text-blue-500 text-xs font-bold">Editar</button>
+                    <button onClick={() => removeSupporter(s.id)} className="text-red-500 text-xs font-bold">Remover</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-8 border-t flex justify-end gap-4">
+             <button onClick={() => setEditingId(null)} className="px-8 py-3 rounded-xl font-bold text-gray-500">Cancelar</button>
+             <button onClick={handleSaveForm} className="bg-[#24CA68] text-white px-12 py-3 rounded-xl font-black shadow-lg">Salvar Alterações</button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {campaigns.map(camp => (
+            <div key={camp.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
+                <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-2xl">
+                   {camp.isActive ? '🟢' : '⚪'}
+                </div>
+                <div className="flex gap-2">
+                   <button onClick={() => handleEdit(camp)} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100">✏️</button>
+                   <button onClick={() => handleDelete(camp.id)} className="p-2 bg-red-50 rounded-lg hover:bg-red-100 text-red-500">🗑️</button>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-black text-gray-800 leading-tight">{camp.title}</h3>
+                <p className="text-xs text-gray-400 font-bold uppercase mt-1">ID: {camp.campaignId}</p>
+              </div>
+
+              <div className="pt-2">
+                 <div className="flex justify-between text-xs font-bold mb-1">
+                    <span className="text-gray-400">ARRECADADO</span>
+                    <span className="text-[#24CA68]">R$ {camp.currentAmount.toFixed(2)}</span>
+                 </div>
+                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-[#24CA68]" 
+                      style={{ width: `${Math.min((camp.currentAmount / (camp.targetAmount || 1)) * 100, 100)}%` }} 
+                    />
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button 
+                  onClick={() => handleSetActive(camp.id)}
+                  className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-wider ${camp.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}
+                >
+                  {camp.isActive ? 'Ativa' : 'Ativar'}
+                </button>
+                <button 
+                  onClick={() => handleCopyLink(camp)}
+                  className="bg-blue-50 text-blue-500 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                >
+                  Link
+                </button>
+                <button 
+                  onClick={() => onViewCampaign && onViewCampaign(camp)}
+                  className="bg-black text-white py-2 rounded-lg text-[10px] font-black uppercase tracking-wider col-span-2"
+                >
+                  Visualizar Página
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
