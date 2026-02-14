@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { DonationConfig, Supporter, PaymentGateway } from '../types';
 import { saveCampaigns, getStoredCampaigns } from '../constants';
+import { db } from '../firebase';
+import { doc, setDoc, deleteDoc, updateDoc, collection, getDocs, query, where } from 'firebase/firestore';
 
 interface AdminPageProps {
   onUpdate: () => void;
@@ -85,37 +87,57 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
     setFormData({ ...camp });
   };
 
-  const handleSetActive = (id: string) => {
+  const handleSetActive = async (id: string) => {
     const updated = campaigns.map(c => c.id === id ? { ...c, isActive: !c.isActive } : { ...c, isActive: false });
-    setCampaigns(updated);
-    saveCampaigns(updated);
-    onUpdate();
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta campanha?')) {
-      const updated = campaigns.filter(c => c.id !== id);
+    
+    // Atualiza no Firebase todos os documentos (um ativo, outros inativos)
+    try {
+      for (const camp of updated) {
+        await setDoc(doc(db, 'campaigns', camp.id), camp);
+      }
       setCampaigns(updated);
       saveCampaigns(updated);
       onUpdate();
+    } catch (e) {
+      alert('Erro ao sincronizar ativação: ' + (e as Error).message);
     }
   };
 
-  const handleSaveForm = () => {
-    if (!formData) return;
-    let updated;
-    const exists = campaigns.find(c => c.id === formData.id);
-    if (exists) {
-      updated = campaigns.map(c => c.id === formData.id ? formData : c);
-    } else {
-      updated = [...campaigns, formData];
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta campanha?')) {
+      try {
+        await deleteDoc(doc(db, 'campaigns', id));
+        const updated = campaigns.filter(c => c.id !== id);
+        setCampaigns(updated);
+        saveCampaigns(updated);
+        onUpdate();
+      } catch (e) {
+        alert('Erro ao excluir: ' + (e as Error).message);
+      }
     }
-    setCampaigns(updated);
-    saveCampaigns(updated);
-    setEditingId(null);
-    setFormData(null);
-    onUpdate();
-    alert('Configurações salvas!');
+  };
+
+  const handleSaveForm = async () => {
+    if (!formData) return;
+    try {
+      await setDoc(doc(db, 'campaigns', formData.id), formData);
+      
+      let updated;
+      const exists = campaigns.find(c => c.id === formData.id);
+      if (exists) {
+        updated = campaigns.map(c => c.id === formData.id ? formData : c);
+      } else {
+        updated = [...campaigns, formData];
+      }
+      setCampaigns(updated);
+      saveCampaigns(updated);
+      setEditingId(null);
+      setFormData(null);
+      onUpdate();
+      alert('Configurações salvas e sincronizadas!');
+    } catch (e) {
+      alert('Erro ao salvar no Firebase: ' + (e as Error).message);
+    }
   };
 
   const addSupporter = () => {

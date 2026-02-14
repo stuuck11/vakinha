@@ -7,11 +7,42 @@ import { HomePage } from './pages/HomePage';
 import { ContributionPage } from './pages/ContributionPage';
 import { AdminPage } from './pages/AdminPage';
 import { StickyDonateButton } from './components/StickyDonateButton';
-import { getActiveCampaign, getCampaignByCid } from './constants';
+import { getActiveCampaign, getCampaignByCid, saveCampaigns } from './constants';
+import { db } from './firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Admin); 
   const [config, setConfig] = useState<DonationConfig>(getActiveCampaign());
+  const [allCampaigns, setAllCampaigns] = useState<DonationConfig[]>([]);
+
+  // Listener em tempo real para o Firebase
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'campaigns'), (snapshot) => {
+      const camps: DonationConfig[] = [];
+      snapshot.forEach((doc) => {
+        camps.push({ ...doc.data() } as DonationConfig);
+      });
+      
+      if (camps.length > 0) {
+        setAllCampaigns(camps);
+        saveCampaigns(camps); // Sincroniza com localstorage para fallback
+
+        // Se estivermos na home/admin, atualiza a campanha ativa
+        const path = window.location.pathname;
+        if (!path.startsWith('/c/') && !path.startsWith('/p/')) {
+          const active = camps.find(c => c.isActive) || camps[0];
+          setConfig(active);
+        } else {
+          // Se estiver em uma campanha específica, atualiza os dados dela se ela mudou
+          const cid = path.split('/')[2];
+          const current = camps.find(c => c.campaignId === cid || c.id === cid);
+          if (current) setConfig(current);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Inicializa o Pixel quando a config mudar
   useEffect(() => {
@@ -53,7 +84,6 @@ const App: React.FC = () => {
         setCurrentPage(Page.Admin);
       }
 
-      // Rastreia PageView em cada mudança de rota
       if ((window as any).fbq) {
         (window as any).fbq('track', 'PageView');
       }

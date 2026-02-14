@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DonationConfig } from '../types';
 import { PaymentModal } from '../components/PaymentModal';
@@ -71,7 +72,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     }
     const cleanCpf = donorData.cpfCnpj.replace(/\D/g, '');
     if (cleanCpf.length < 11) {
-      setError("Por favor, insira um CPF ou CNPJ válido.");
+      setError("Por favor, insira um CPF válido.");
       return;
     }
     setError(null);
@@ -98,10 +99,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
              <h3 className="text-base font-black text-gray-800">Seus dados</h3>
              <div className="grid grid-cols-1 gap-3">
                 <input type="text" placeholder="Nome completo" value={donorData.name} onChange={(e) => setDonorData({...donorData, name: e.target.value})} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input type="text" placeholder="CPF ou CNPJ" value={donorData.cpfCnpj} onChange={handleCpfChange} maxLength={18} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
-                  <input type="email" placeholder="E-mail (opcional)" value={donorData.email} onChange={(e) => setDonorData({...donorData, email: e.target.value})} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
-                </div>
+                <input type="text" placeholder="CPF" value={donorData.cpfCnpj} onChange={handleCpfChange} maxLength={18} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
              </div>
           </div>
 
