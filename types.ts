@@ -63,6 +63,7 @@ export interface DonationConfig {
   asaasConfig: AsaasConfig;
   pixupConfig: PixUpConfig;
   metaPixelId?: string;
+  metaAccessToken?: string;
 }
 
 export enum Page {

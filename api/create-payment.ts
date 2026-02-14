@@ -7,7 +7,58 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { amount, name, email, cpfCnpj, campaignTitle, gateway } = req.body;
+    const { amount, name, email, cpfCnpj, campaignTitle, gateway, pixelId, accessToken, originUrl } = req.body;
+    const userAgent = req.headers['user-agent'] || '';
+
+    // Lógica da API de Conversões do Facebook (CAPI)
+    // Implementando InitiateCheckout e Purchase server-side conforme imagem
+    if (pixelId && accessToken) {
+      try {
+        const events = [
+          {
+            event_name: 'InitiateCheckout',
+            event_time: Math.floor(Date.now() / 1000),
+            action_source: 'website',
+            event_source_url: originUrl,
+            user_data: {
+              client_user_agent: userAgent,
+              em: email ? [email] : undefined,
+              ph: undefined, // Poderia ser extraído do CPF ou campo extra
+              external_id: undefined
+            },
+            custom_data: {
+              currency: 'BRL',
+              value: Number(amount),
+              content_name: campaignTitle
+            }
+          },
+          {
+            event_name: 'Purchase',
+            event_time: Math.floor(Date.now() / 1000),
+            action_source: 'website',
+            event_source_url: originUrl,
+            user_data: {
+              client_user_agent: userAgent,
+              em: email ? [email] : undefined
+            },
+            custom_data: {
+              currency: 'BRL',
+              value: Number(amount),
+              content_name: campaignTitle,
+              content_type: 'product'
+            }
+          }
+        ];
+
+        fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: events })
+        }).catch(e => console.error('FB CAPI Error:', e));
+      } catch (e) {
+        console.error('CAPI Preparation Error:', e);
+      }
+    }
 
     // Lógica PixUp
     if (gateway === 'pixup') {
@@ -16,7 +67,6 @@ export default async function handler(req: any, res: any) {
         throw new Error('Configuração de servidor ausente: PIXUP_API_KEY não configurada.');
       }
 
-      // Exemplo de integração PixUp (ajuste a URL conforme a documentação oficial da PixUp se necessário)
       const pixupResponse = await fetch('https://api.pixup.com/v1/payments', {
         method: 'POST',
         headers: {
@@ -24,7 +74,7 @@ export default async function handler(req: any, res: any) {
           'Authorization': `Bearer ${pixupApiKey}`
         },
         body: JSON.stringify({
-          amount: Math.round(amount * 100), // Algumas APIs usam centavos
+          amount: Math.round(amount * 100),
           description: `Doação: ${campaignTitle}`,
           payer: {
             name: name || 'Doador',
@@ -37,7 +87,6 @@ export default async function handler(req: any, res: any) {
       const pixupData = await pixupResponse.json();
       if (!pixupResponse.ok) throw new Error(pixupData.message || 'Erro na PixUp');
 
-      // Normaliza a resposta para o componente PaymentModal
       return res.status(200).json({
         provider: 'pixup',
         next_action: {

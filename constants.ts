@@ -40,6 +40,7 @@ const INITIAL_CAMPAIGN: DonationConfig = {
   asaasConfig: { apiKey: '' },
   pixupConfig: { apiKey: '' },
   metaPixelId: '',
+  metaAccessToken: '',
   supporters: [
     { id: '1', name: 'Maria S.', amount: 100, comment: 'Força Malak! 💚', time: 'há 2 horas', avatarColor: '#E6FFFA' },
     { id: '2', name: 'João P.', amount: 50, comment: 'Estamos com você!', time: 'há 5 horas', avatarColor: '#F0FFF4' },
@@ -64,6 +65,7 @@ export const getStoredCampaigns = (): DonationConfig[] => {
         beneficiaryName: c.beneficiaryName || 'Malak',
         topicTitle: c.topicTitle || 'Ajude o Malak a lutar pela vida 🐾 💛',
         metaPixelId: c.metaPixelId || '',
+        metaAccessToken: c.metaAccessToken || '',
         creatorName: c.creatorName || 'Admin',
         creatorSince: c.creatorSince || 'novembro/2024'
       }));

@@ -23,7 +23,10 @@ export const paymentService = {
           email: donorData.email,
           cpfCnpj: donorData.cpfCnpj.replace(/\D/g, ''),
           campaignTitle: campaign.title,
-          gateway: campaign.gateway
+          gateway: campaign.gateway,
+          pixelId: campaign.metaPixelId,
+          accessToken: campaign.metaAccessToken,
+          originUrl: window.location.href
         }),
         signal: controller.signal
       });

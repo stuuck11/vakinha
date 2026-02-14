@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DonationConfig } from '../types';
 
 interface HomePageProps {
@@ -9,6 +9,17 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => {
   const [activeTab, setActiveTab] = useState<'sobre' | 'ajudaram'>('sobre');
+
+  useEffect(() => {
+    if ((window as any).fbq && config.metaPixelId) {
+      (window as any).fbq('track', 'ViewContent', {
+        content_name: config.title,
+        content_category: config.category,
+        content_ids: [config.campaignId],
+        content_type: 'product'
+      });
+    }
+  }, [config.metaPixelId, config.title, config.category, config.campaignId]);
 
   const progressPercentage = Math.min((config.currentAmount / config.targetAmount) * 100, 100);
 

@@ -73,7 +73,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       mercadopagoConfig: { publicKey: '' },
       asaasConfig: { apiKey: '' },
       pixupConfig: { apiKey: '' },
-      metaPixelId: ''
+      metaPixelId: '',
+      metaAccessToken: ''
     };
     setEditingId(newCamp.id);
     setFormData(newCamp);
@@ -246,8 +247,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
                      value={formData.metaPixelId || ''} 
                      onChange={e => setFormData({...formData, metaPixelId: e.target.value})} 
                      placeholder="Ex: 123456789012345"
+                     className="w-full border p-4 rounded-xl bg-white outline-none focus:border-red-400 font-bold mb-3" 
+                   />
+                   
+                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Token da API de Conversões (CAPI)</span>
+                   <input 
+                     value={formData.metaAccessToken || ''} 
+                     onChange={e => setFormData({...formData, metaAccessToken: e.target.value})} 
+                     placeholder="EAAB..."
                      className="w-full border p-4 rounded-xl bg-white outline-none focus:border-red-400 font-bold" 
                    />
+                   <p className="text-[9px] text-gray-400 mt-2 italic font-medium">Necessário para eventos server-side (InitiateCheckout, Purchase)</p>
                 </div>
               </div>
 
