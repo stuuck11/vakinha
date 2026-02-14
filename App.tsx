@@ -10,13 +10,19 @@ import { StickyDonateButton } from './components/StickyDonateButton';
 import { getActiveCampaign, getCampaignByCid } from './constants';
 
 const App: React.FC = () => {
-  // Page.Admin renderiza a HomePage (público) e Page.Home renderiza o AdminPage (painel)
   const [currentPage, setCurrentPage] = useState<Page>(Page.Admin); 
   const [config, setConfig] = useState<DonationConfig>(getActiveCampaign());
 
+  // Inicializa o Pixel quando a config mudar
+  useEffect(() => {
+    if (config.metaPixelId && (window as any).fbq) {
+      (window as any).fbq('init', config.metaPixelId);
+      (window as any).fbq('track', 'PageView');
+    }
+  }, [config.metaPixelId]);
+
   useEffect(() => {
     const handleRoute = () => {
-      // Usando PATHNAME para links limpos compatíveis com Instagram
       const path = window.location.pathname;
       
       if (path.startsWith('/c/')) {
@@ -26,7 +32,6 @@ const App: React.FC = () => {
           setConfig(camp);
           setCurrentPage(Page.Admin); 
         } else {
-          // Se não achar a campanha, volta pra raiz
           pushRoute('/', true);
         }
       } 
@@ -43,10 +48,14 @@ const App: React.FC = () => {
       else if (path === '/login' || path === '/admin-panel') {
         setCurrentPage(Page.Home);
       } else {
-        // Rota padrão ou raiz
         const active = getActiveCampaign();
         setConfig(active);
         setCurrentPage(Page.Admin);
+      }
+
+      // Rastreia PageView em cada mudança de rota
+      if ((window as any).fbq) {
+        (window as any).fbq('track', 'PageView');
       }
     };
 
@@ -59,11 +68,6 @@ const App: React.FC = () => {
     setConfig(getActiveCampaign());
   };
 
-  /**
-   * pushRoute: Muda a rota da aplicação.
-   * @param path O caminho a ser navegado
-   * @param replace Se deve substituir o histórico em vez de adicionar
-   */
   const pushRoute = (path: string, replace = false) => {
     try {
       if (replace) {
@@ -72,13 +76,9 @@ const App: React.FC = () => {
         window.history.pushState({}, '', path);
       }
     } catch (e) {
-      console.warn("Aviso: A atualização da URL foi bloqueada pelo sandbox, mas a navegação interna continuará funcionando.", e);
+      console.warn("Aviso de navegação", e);
     }
-    
-    // Dispara o evento manualmente para o useEffect reagir à mudança de estado
     window.dispatchEvent(new Event('popstate'));
-    
-    // Teleporte imediato para o topo (sem animação suave)
     window.scrollTo(0, 0);
   };
 
@@ -102,7 +102,6 @@ const App: React.FC = () => {
       )}
       
       <main className="flex-grow">
-        {/* Painel Administrativo */}
         {currentPage === Page.Home && (
           <AdminPage 
             onUpdate={refreshConfig} 
@@ -110,13 +109,9 @@ const App: React.FC = () => {
             onViewCampaign={handleViewCampaign} 
           />
         )}
-
-        {/* Site Público da Campanha */}
         {currentPage === Page.Admin && (
           <HomePage onDonateClick={navigateToDonate} config={config} />
         )}
-
-        {/* Página de Checkout/PIX */}
         {currentPage === Page.Contribution && (
           <ContributionPage 
             onBack={() => pushRoute(`/c/${config.campaignId}`)} 
@@ -125,12 +120,10 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Botão flutuante apenas no site público */}
       {currentPage === Page.Admin && (
         <StickyDonateButton onClick={navigateToDonate} />
       )}
 
-      {/* Footer em todas as páginas exceto Admin */}
       {currentPage !== Page.Home && (
         <Footer onAdminClick={navigateToAdmin} />
       )}

@@ -28,7 +28,11 @@ export interface AsaasConfig {
   apiKey: string;
 }
 
-export type PaymentGateway = 'stripe' | 'mercadopago' | 'asaas';
+export interface PixUpConfig {
+  apiKey: string;
+}
+
+export type PaymentGateway = 'stripe' | 'mercadopago' | 'asaas' | 'pixup';
 
 export interface DonationConfig {
   id: string;
@@ -57,6 +61,8 @@ export interface DonationConfig {
   stripeConfig: StripeConfig;
   mercadopagoConfig: MercadoPagoConfig;
   asaasConfig: AsaasConfig;
+  pixupConfig: PixUpConfig; // Novo campo
+  metaPixelId?: string;
 }
 
 export enum Page {

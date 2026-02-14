@@ -9,13 +9,21 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   const [selectedUpsells, setSelectedUpsells] = useState<string[]>([]);
   const [total, setTotal] = useState<number>(0);
   
-  // Novos estados para dados do doador
   const [donorData, setDonorData] = useState({ name: '', email: '', cpfCnpj: '' });
-  
   const [error, setError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
 
-  // Valores calculados para exibição
+  // Evento de rastreio InitiateCheckout
+  useEffect(() => {
+    if ((window as any).fbq) {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        content_name: config.title,
+        content_category: config.category,
+        currency: 'BRL'
+      });
+    }
+  }, []);
+
   const upsellsTotal = config.upsells
     .filter(u => selectedUpsells.includes(u.id))
     .reduce((acc, curr) => acc + curr.value, 0);
@@ -42,22 +50,15 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length <= 11) {
-      value = value.replace(/(\d{3})(\d)/, '$1.$2');
-      value = value.replace(/(\d{3})(\d)/, '$1.$2');
-      value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      value = value.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     } else {
-      value = value.replace(/^(\d{2})(\d)/, '$1.$2');
-      value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
-      value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
-      value = value.replace(/(\d{4})(\d)/, '$1-$2');
+      value = value.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
     }
     setDonorData({ ...donorData, cpfCnpj: value });
   };
 
   const toggleUpsell = (id: string) => {
-    setSelectedUpsells(prev => 
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
+    setSelectedUpsells(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
 
   const handleContribute = () => {
@@ -81,100 +82,45 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   return (
     <div className="bg-white min-h-screen pb-12">
       <div className="max-w-[640px] mx-auto px-4 py-6">
-        
         <div className="space-y-1 mb-8">
            <h1 className="text-[22px] font-black text-gray-800 tracking-tight leading-tight">{config.title}</h1>
            <p className="text-[12px] font-bold text-gray-400">ID: {config.campaignId}</p>
         </div>
 
         <div className="space-y-8">
-          {/* Seção Seus Dados */}
           <div className="space-y-4">
              <h3 className="text-base font-black text-gray-800">Seus dados</h3>
              <div className="grid grid-cols-1 gap-3">
-                <input 
-                  type="text" 
-                  placeholder="Nome completo"
-                  value={donorData.name}
-                  onChange={(e) => setDonorData({...donorData, name: e.target.value})}
-                  className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium"
-                />
+                <input type="text" placeholder="Nome completo" value={donorData.name} onChange={(e) => setDonorData({...donorData, name: e.target.value})} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input 
-                    type="text" 
-                    placeholder="CPF ou CNPJ"
-                    value={donorData.cpfCnpj}
-                    onChange={handleCpfChange}
-                    maxLength={18}
-                    className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium"
-                  />
-                  <input 
-                    type="email" 
-                    placeholder="E-mail (opcional)"
-                    value={donorData.email}
-                    onChange={(e) => setDonorData({...donorData, email: e.target.value})}
-                    className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium"
-                  />
+                  <input type="text" placeholder="CPF ou CNPJ" value={donorData.cpfCnpj} onChange={handleCpfChange} maxLength={18} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
+                  <input type="email" placeholder="E-mail (opcional)" value={donorData.email} onChange={(e) => setDonorData({...donorData, email: e.target.value})} className="w-full border border-gray-300 p-4 rounded-lg outline-none focus:border-[#24CA68] transition-all font-medium" />
                 </div>
              </div>
           </div>
 
-          {/* Campo de Valor Principal */}
           <div className="space-y-3">
             <h3 className="text-base font-black text-gray-800">Valor da contribuição</h3>
             <div className="flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-[#24CA68] focus-within:border-[#24CA68] bg-white transition-all">
                <div className="bg-gray-100/50 px-5 flex items-center justify-center font-bold text-gray-500 text-lg border-r">R$</div>
-               <input 
-                 type="text"
-                 value={customValue}
-                 onChange={handleCustomChange}
-                 placeholder="0,00"
-                 className="w-full py-4 px-4 text-xl font-medium focus:outline-none bg-white"
-               />
+               <input type="text" value={customValue} onChange={handleCustomChange} placeholder="0,00" className="w-full py-4 px-4 text-xl font-medium focus:outline-none bg-white" />
             </div>
           </div>
 
-          {/* Grid de Valores Predefinidos */}
           <div className="grid grid-cols-2 gap-3">
              {config.presetAmounts.map(amount => (
-               <button
-                 key={amount}
-                 onClick={() => handlePresetClick(amount)}
-                 className={`relative py-4 border border-gray-300 rounded-xl font-medium text-lg transition-all ${baseValue === amount ? 'border-[#24CA68] bg-[#EEFFE6]/20 text-gray-800' : 'text-gray-700 bg-white'}`}
-               >
-                 {amount === 50 && (
-                   <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#FF5C39] text-white text-[7px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm uppercase tracking-wider">
-                     Mais escolhido
-                   </div>
-                 )}
+               <button key={amount} onClick={() => handlePresetClick(amount)} className={`relative py-4 border border-gray-300 rounded-xl font-medium text-lg transition-all ${baseValue === amount ? 'border-[#24CA68] bg-[#EEFFE6]/20 text-gray-800' : 'text-gray-700 bg-white'}`}>
+                 {amount === 50 && (<div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[#FF5C39] text-white text-[7px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm uppercase tracking-wider">Mais escolhido</div>)}
                  R$ {amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                </button>
              ))}
           </div>
 
-          {/* Forma de Pagamento */}
-          <div className="space-y-3 pt-2">
-             <h3 className="text-base font-black text-gray-800">Forma de pagamento</h3>
-             <button className="flex items-center gap-3 bg-[#24CA68] text-white px-5 py-3 rounded-lg font-bold text-sm">
-                <div className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center">
-                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                </div>
-                Pix
-             </button>
-          </div>
-
-          {/* Upsells (Turbos) */}
           <div className="space-y-4 pt-4 border-t border-gray-100">
              <h3 className="text-base font-black text-gray-800">Turbine sua doação</h3>
-             <p className="text-gray-500 text-sm font-medium">Ajude MUITO MAIS turbinando sua doação 💚</p>
-             
              <div className="grid grid-cols-3 gap-0 border rounded-xl overflow-hidden border-gray-200">
-                {config.upsells.map((upsell, idx) => (
-                  <div 
-                    key={upsell.id}
-                    onClick={() => toggleUpsell(upsell.id)}
-                    className={`p-4 text-center transition-all cursor-pointer border-r last:border-r-0 border-gray-200 ${selectedUpsells.includes(upsell.id) ? 'bg-[#D1F2D1]' : 'bg-white'}`}
-                  >
+                {config.upsells.map((upsell) => (
+                  <div key={upsell.id} onClick={() => toggleUpsell(upsell.id)} className={`p-4 text-center transition-all cursor-pointer border-r last:border-r-0 border-gray-200 ${selectedUpsells.includes(upsell.id) ? 'bg-[#D1F2D1]' : 'bg-white'}`}>
                     <div className="text-2xl mb-3 flex justify-center h-12 items-center">
                        {upsell.id === 'transporte' && <img src="https://imgur.com/6o2Yh0d.png" className="h-full object-contain" alt="carro" />}
                        {upsell.id === 'medicacao' && <img src="https://imgur.com/uYJiGxX.png" className="h-full object-contain" alt="medicação" />}
@@ -187,7 +133,6 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
              </div>
           </div>
 
-          {/* Resumo e Botão Final */}
           <div className="pt-6 space-y-5">
              <div className="space-y-3">
                <div className="flex justify-between items-center text-sm font-medium text-gray-500">
@@ -198,45 +143,19 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
                   <span>Total:</span>
                   <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                </div>
-               {selectedUpsells.length > 0 && (
-                 <div className="text-[10px] text-gray-400 font-bold text-right -mt-2 leading-tight">
-                   Doação (R$ {donationBase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) + {config.upsells.filter(u => selectedUpsells.includes(u.id)).map(u => `${u.label} (R$ ${u.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`).join(' + ')}
-                 </div>
-               )}
              </div>
 
              {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">{error}</p>}
 
-             <button 
-               onClick={handleContribute}
-               className="w-full bg-[#24CA68] text-white py-5 rounded-lg font-black text-xl shadow-sm active:scale-95 transition-all uppercase tracking-wide"
-             >
-               Contribuir
-             </button>
-
-             <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-               Ao clicar no botão acima você declara que é maior de 18 anos, leu e está de acordo com os <span className="underline">Termos, Taxas e Prazos</span>.
-             </p>
-
-             <div className="bg-[#F1F1F1] rounded-lg p-3 flex items-center gap-4">
-                <img 
-                   src="https://imgur.com/uq2fnTv.png" 
-                   alt="Selo de Segurança" 
-                   className="h-10 w-auto object-contain" 
-                />
-                <p className="text-[12px] text-[#424750] leading-tight font-medium">
-                   Garantimos uma <span className="font-bold">experiência segura</span> para todos os nossos doadores.
-                </p>
-             </div>
-
-             <p className="text-[10px] text-gray-400 leading-normal">
-               Informamos que o preenchimento do seu cadastro completo estará disponível em seu painel pessoal na plataforma após a conclusão desta doação. Importante destacar a importância da adequação do seu cadastro, informando o <span className="font-bold">nome social</span>, caso o utilize.
-             </p>
+             <button onClick={handleContribute} className="w-full bg-[#24CA68] text-white py-5 rounded-lg font-black text-xl shadow-sm active:scale-95 transition-all uppercase tracking-wide">Contribuir</button>
+             <p className="text-[10px] text-gray-400 text-center leading-relaxed">Ao clicar no botão acima você declara que leu e está de acordo com os <span className="underline">Termos, Taxas e Prazos</span>.</p>
           </div>
         </div>
       </div>
 
-      {showPayment && <PaymentModal total={total} donorData={donorData} campaignTitle={config.title} onClose={() => setShowPayment(false)} />}
+      {showPayment && (
+        <PaymentModal total={total} donorData={donorData} campaignTitle={config.title} config={config} onClose={() => setShowPayment(false)} />
+      )}
     </div>
   );
 };

@@ -34,17 +34,12 @@ const INITIAL_CAMPAIGN: DonationConfig = {
     { id: 'cesta', label: 'Doar cesta básica', value: 85.00, icon: '🧺' },
   ],
   isActive: true,
-  gateway: 'asaas', // Alterado para Asaas como padrão para evitar erro de configuração do Stripe
-  stripeConfig: {
-    publicKey: '',
-    isTestMode: true
-  },
-  mercadopagoConfig: {
-    publicKey: ''
-  },
-  asaasConfig: {
-    apiKey: ''
-  },
+  gateway: 'pixup',
+  stripeConfig: { publicKey: '', isTestMode: true },
+  mercadopagoConfig: { publicKey: '' },
+  asaasConfig: { apiKey: '' },
+  pixupConfig: { apiKey: '' }, // Adicionado
+  metaPixelId: '',
   supporters: [
     { id: '1', name: 'Maria S.', amount: 100, comment: 'Força Malak! 💚', time: 'há 2 horas', avatarColor: '#E6FFFA' },
     { id: '2', name: 'João P.', amount: 50, comment: 'Estamos com você!', time: 'há 5 horas', avatarColor: '#F0FFF4' },
@@ -60,13 +55,15 @@ export const getStoredCampaigns = (): DonationConfig[] => {
       const parsed = JSON.parse(stored);
       return parsed.map((c: any) => ({
         ...c,
-        gateway: c.gateway || 'asaas',
+        gateway: c.gateway || 'pixup',
         mercadopagoConfig: c.mercadopagoConfig || { publicKey: '' },
         asaasConfig: c.asaasConfig || { apiKey: '' },
+        pixupConfig: c.pixupConfig || { apiKey: '' },
         logoUrl: c.logoUrl || 'https://imgur.com/NeAZeVi.png',
         sealIcon: c.sealIcon || 'https://imgur.com/39baGGf.png',
         beneficiaryName: c.beneficiaryName || 'Malak',
-        topicTitle: c.topicTitle || 'Ajude o Malak a lutar pela vida 🐾 💛'
+        topicTitle: c.topicTitle || 'Ajude o Malak a lutar pela vida 🐾 💛',
+        metaPixelId: c.metaPixelId || ''
       }));
     } catch (e) {
       return [INITIAL_CAMPAIGN];
