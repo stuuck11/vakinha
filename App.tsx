@@ -67,6 +67,12 @@ const App: React.FC = () => {
     const handleRoute = () => {
       const path = window.location.pathname;
       
+      // Redirecionamento da homepage conforme solicitado
+      if (path === '/' || path === '') {
+        window.location.href = 'https://www.vakinha.com.br/';
+        return;
+      }
+
       if (path.startsWith('/c/')) {
         const cid = path.substring(3).split('?')[0];
         const camp = getCampaignByCid(cid);
