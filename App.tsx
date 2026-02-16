@@ -12,8 +12,18 @@ import { db } from './firebase';
 import { collection, onSnapshot, QuerySnapshot, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
 const App: React.FC = () => {
+  // Inicialização imediata para evitar flicker de logos diferentes
+  const getInitialConfig = () => {
+    const path = window.location.pathname;
+    if (path.startsWith('/c/') || path.startsWith('/p/')) {
+      const cid = path.substring(3).split('?')[0];
+      return getCampaignByCid(cid) || getActiveCampaign();
+    }
+    return getActiveCampaign();
+  };
+
   const [currentPage, setCurrentPage] = useState<Page>(Page.Admin); 
-  const [config, setConfig] = useState<DonationConfig>(getActiveCampaign());
+  const [config, setConfig] = useState<DonationConfig>(getInitialConfig());
   const [allCampaigns, setAllCampaigns] = useState<DonationConfig[]>([]);
 
   // Listener em tempo real para o Firebase com tratamento de erro robusto
@@ -154,7 +164,7 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFDFD]">
       {currentPage !== Page.Home && (
-        <Header onDonateClick={navigateToDonate} />
+        <Header onDonateClick={navigateToDonate} config={config} />
       )}
       
       <main className="flex-grow">

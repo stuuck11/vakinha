@@ -1,14 +1,13 @@
 
 import React from 'react';
-import { getActiveCampaign } from '../constants';
+import { DonationConfig } from '../types';
 
 interface HeaderProps {
   onDonateClick: () => void;
+  config: DonationConfig;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onDonateClick }) => {
-  const config = getActiveCampaign();
-  
+export const Header: React.FC<HeaderProps> = ({ onDonateClick, config }) => {
   return (
     <header className="bg-white border-b sticky top-0 z-50 px-4 py-3">
       <div className="max-w-[640px] mx-auto flex items-center justify-between">
