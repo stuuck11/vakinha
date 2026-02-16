@@ -148,11 +148,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
   };
 
   const handleSetActive = async (id: string) => {
-    const updated = campaigns.map(c => c.id === id ? { ...c, isActive: !c.isActive } : { ...c, isActive: false });
+    // Alterado para permitir múltiplas campanhas ativas ao mesmo tempo
+    const updated = campaigns.map(c => c.id === id ? { ...c, isActive: !c.isActive } : c);
     setCampaigns(updated);
     saveCampaigns(updated);
     if (db && isCloudSyncing) {
-      try { for (const camp of updated) { await setDoc(doc(db, 'campaigns', camp.id), camp); } } catch (e) {}
+      try { 
+        // Sincroniza apenas a campanha que foi alterada no Firebase para performance
+        const target = updated.find(c => c.id === id);
+        if (target) {
+          await setDoc(doc(db, 'campaigns', target.id), target);
+        }
+      } catch (e) {}
     }
     onUpdate();
   };
