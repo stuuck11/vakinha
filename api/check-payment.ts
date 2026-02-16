@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 
 export default async function handler(req: any, res: any) {
@@ -33,26 +34,33 @@ export default async function handler(req: any, res: any) {
       isPaid = intent.status === 'succeeded';
     }
     else if (gateway === 'pixup') {
-       // Simulação para demo ou integração PixUp via Status
-       isPaid = false; // PixUp geralmente requer webhook, mas simulamos consulta se disponível
+       isPaid = false; 
     }
 
-    // 2. Se pago, dispara Purchase via CAPI (Server-side)
+    // 2. Se pago, dispara Purchase via CAPI (Server-side) com valor explícito
     if (isPaid && pixelId && accessToken) {
       const event = {
         event_name: 'Purchase',
         event_time: Math.floor(Date.now() / 1000),
         action_source: 'website',
         event_source_url: originUrl,
-        user_data: { client_user_agent: userAgent, em: email ? [email] : undefined },
-        custom_data: { currency: 'BRL', value: Number(amount), content_name: campaignTitle }
+        user_data: { 
+          client_user_agent: userAgent, 
+          em: email ? [email] : undefined 
+        },
+        custom_data: { 
+          currency: 'BRL', 
+          value: Number(amount) || 0, 
+          content_name: campaignTitle,
+          content_type: 'product'
+        }
       };
 
       fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: [event] })
-      }).catch(() => {});
+      }).catch((e) => console.error("CAPI Error:", e));
     }
 
     return res.status(200).json({ paid: isPaid });

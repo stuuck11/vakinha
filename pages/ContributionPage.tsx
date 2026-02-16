@@ -13,7 +13,7 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   const [error, setError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
 
-  // Evento de rastreio InitiateCheckout
+  // InitiateCheckout inicial genérico
   useEffect(() => {
     if ((window as any).fbq) {
       (window as any).fbq('track', 'InitiateCheckout', {
@@ -76,6 +76,17 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
       return;
     }
     setError(null);
+
+    // Dispara InitiateCheckout atualizado com o valor final quando clica no botão
+    if ((window as any).fbq) {
+      (window as any).fbq('track', 'InitiateCheckout', {
+        value: Number(total),
+        currency: 'BRL',
+        content_name: config.title,
+        content_category: config.category
+      });
+    }
+
     setShowPayment(true);
   };
 

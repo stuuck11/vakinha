@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { paymentService } from '../services/payment';
 import { DonationConfig } from '../types';
@@ -25,9 +26,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         const response = await paymentService.createPixPayment(total, donorData, config);
         if (!isMounted) return;
 
-        // Pixel: Intenção de pagamento
+        // Pixel: Intenção de pagamento com valor
         if ((window as any).fbq) {
-          (window as any).fbq('track', 'AddPaymentInfo', { value: total, currency: 'BRL', content_name: campaignTitle });
+          (window as any).fbq('track', 'AddPaymentInfo', { 
+            value: Number(total), 
+            currency: 'BRL', 
+            content_name: campaignTitle,
+            content_type: 'product'
+          });
         }
 
         let id = response.id;
@@ -47,7 +53,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
 
         setPixData({ id, qrCode: qr, copyPaste: cp });
         
-        // Iniciar monitoramento do pagamento (Polling)
         if (id) {
           pollingRef.current = setInterval(async () => {
             const status = await paymentService.checkPaymentStatus(id, config.gateway, config, total, donorData.email);
@@ -55,16 +60,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
               setIsPaid(true);
               clearInterval(pollingRef.current);
               
-              // EVENTO REAL DE COMPRA DISPARADO APENAS AQUI
+              // EVENTO REAL DE COMPRA COM VALOR
               if ((window as any).fbq) {
                 (window as any).fbq('track', 'Purchase', {
-                  value: total,
+                  value: Number(total),
                   currency: 'BRL',
-                  content_name: campaignTitle
+                  content_name: campaignTitle,
+                  content_type: 'product'
                 });
               }
             }
-          }, 5000); // Checa a cada 5 segundos
+          }, 5000);
         }
 
       } catch (err: any) {

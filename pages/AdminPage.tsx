@@ -193,6 +193,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
     setNewSupporter({ name: '', amount: 0, comment: '', time: 'há instantes', avatarColor: '#F5F5F5' });
   };
 
+  const startEditSupporter = (s: Supporter) => {
+    setNewSupporter({ ...s });
+    setEditingSupporterId(s.id);
+    // Scroll suave para o formulário de doadores
+    document.getElementById('doadores-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -376,22 +383,38 @@ service cloud.firestore {
           </div>
 
           {/* DOADORES MANUAIS */}
-          <div className="pt-8 border-t">
+          <div className="pt-8 border-t" id="doadores-form">
             <h3 className="text-sm font-black text-gray-800 mb-6 uppercase tracking-widest">Lista de Doadores Fakes / Reais</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 bg-gray-50 p-6 rounded-2xl border">
               <input placeholder="Nome" value={newSupporter.name} onChange={e => setNewSupporter({...newSupporter, name: e.target.value})} className="border p-3 rounded-lg" />
               <input type="number" placeholder="Valor" value={newSupporter.amount} onChange={e => setNewSupporter({...newSupporter, amount: parseFloat(e.target.value)})} className="border p-3 rounded-lg" />
               <input placeholder="Tempo (ex: há 2h)" value={newSupporter.time} onChange={e => setNewSupporter({...newSupporter, time: e.target.value})} className="border p-3 rounded-lg" />
-              <button onClick={addSupporter} className="bg-black text-white rounded-lg font-bold h-[50px]">Adicionar</button>
+              <input placeholder="Mensagem personalizada" value={newSupporter.comment} onChange={e => setNewSupporter({...newSupporter, comment: e.target.value})} className="border p-3 rounded-lg" />
+              <div className="flex gap-2">
+                <button onClick={addSupporter} className={`${editingSupporterId ? 'bg-[#24CA68]' : 'bg-black'} text-white rounded-lg font-bold h-[50px] flex-grow text-xs uppercase tracking-tighter`}>
+                  {editingSupporterId ? 'Salvar Alteração' : 'Adicionar'}
+                </button>
+                {editingSupporterId && (
+                   <button onClick={() => { setEditingSupporterId(null); setNewSupporter({ name: '', amount: 0, comment: '', time: 'há instantes', avatarColor: '#F5F5F5' }); }} className="bg-gray-200 text-gray-600 rounded-lg font-bold px-3 h-[50px] text-xs">X</button>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {formData.supporters.map(s => (
-                <div key={s.id} className="flex justify-between items-center p-4 border rounded-xl bg-white shadow-sm">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-black text-gray-800">{s.name}</span>
-                    <span className="text-[10px] font-bold text-[#24CA68]">R$ {s.amount.toFixed(2)} • {s.time}</span>
+                <div key={s.id} className="flex flex-col p-4 border rounded-xl bg-white shadow-sm gap-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-black text-gray-800">{s.name}</span>
+                      <span className="text-[10px] font-bold text-[#24CA68]">R$ {s.amount.toFixed(2)} • {s.time}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => startEditSupporter(s)} className="text-[#24CA68] hover:text-green-700 font-bold text-[10px] uppercase">Editar</button>
+                      <button onClick={() => setFormData({...formData, supporters: formData.supporters.filter(i => i.id !== s.id)})} className="text-red-400 hover:text-red-600 font-bold text-[10px] uppercase">Remover</button>
+                    </div>
                   </div>
-                  <button onClick={() => setFormData({...formData, supporters: formData.supporters.filter(i => i.id !== s.id)})} className="text-red-400 hover:text-red-600 font-bold text-xs uppercase">Remover</button>
+                  {s.comment && (
+                    <p className="text-[10px] text-gray-500 italic bg-gray-50 p-2 rounded-lg">"{s.comment}"</p>
+                  )}
                 </div>
               ))}
             </div>
