@@ -24,7 +24,16 @@ const App: React.FC = () => {
         (snapshot: QuerySnapshot<DocumentData>) => {
           const camps: DonationConfig[] = [];
           snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-            camps.push({ ...doc.data() } as DonationConfig);
+            const data = doc.data() as any;
+            const campWithUpsells = { 
+              ...data,
+              upsells: data.upsells && data.upsells.length > 0 ? data.upsells : [
+                { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
+                { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },
+                { id: 'cesta', label: 'Doar cesta básica', value: 85.00, icon: '🧺' },
+              ]
+            } as DonationConfig;
+            camps.push(campWithUpsells);
           });
           
           if (camps.length > 0) {

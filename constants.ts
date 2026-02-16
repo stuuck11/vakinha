@@ -67,7 +67,12 @@ export const getStoredCampaigns = (): DonationConfig[] => {
         metaPixelId: c.metaPixelId || '',
         metaAccessToken: c.metaAccessToken || '',
         creatorName: c.creatorName || 'Admin',
-        creatorSince: c.creatorSince || 'novembro/2024'
+        creatorSince: c.creatorSince || 'novembro/2024',
+        upsells: c.upsells && c.upsells.length > 0 ? c.upsells : [
+          { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
+          { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },
+          { id: 'cesta', label: 'Doar cesta básica', value: 85.00, icon: '🧺' },
+        ]
       }));
     } catch (e) {
       return [INITIAL_CAMPAIGN];
