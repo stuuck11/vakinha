@@ -1,4 +1,11 @@
+
 import Stripe from 'stripe';
+import crypto from 'crypto';
+
+function hash(val: string | undefined): string | undefined {
+  if (!val) return undefined;
+  return crypto.createHash('sha256').update(val.trim().toLowerCase()).digest('hex');
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -8,16 +15,26 @@ export default async function handler(req: any, res: any) {
   try {
     const { amount, name, email, cpfCnpj, campaignTitle, gateway, pixelId, accessToken, originUrl } = req.body;
     const userAgent = req.headers['user-agent'] || '';
+    
+    // Captura tracking cookies para CAPI
+    const cookies = req.headers.cookie || '';
+    const fbp = cookies.split('; ').find((row: string) => row.startsWith('_fbp='))?.split('=')[1];
+    const fbc = cookies.split('; ').find((row: string) => row.startsWith('_fbc='))?.split('=')[1];
 
     // CAPI: Intent de Pagamento
     if (pixelId && accessToken) {
+      const hashedEmail = email ? hash(email) : undefined;
       const events = [
         {
           event_name: 'InitiateCheckout',
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'website',
           event_source_url: originUrl,
-          user_data: { client_user_agent: userAgent, em: email ? [email] : undefined },
+          user_data: { 
+            client_user_agent: userAgent, 
+            em: hashedEmail ? [hashedEmail] : undefined,
+            fbp, fbc 
+          },
           custom_data: { currency: 'BRL', value: Number(amount), content_name: campaignTitle }
         },
         {
@@ -25,7 +42,11 @@ export default async function handler(req: any, res: any) {
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'website',
           event_source_url: originUrl,
-          user_data: { client_user_agent: userAgent, em: email ? [email] : undefined },
+          user_data: { 
+            client_user_agent: userAgent, 
+            em: hashedEmail ? [hashedEmail] : undefined,
+            fbp, fbc 
+          },
           custom_data: { currency: 'BRL', value: Number(amount), content_name: campaignTitle }
         }
       ];

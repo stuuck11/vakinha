@@ -1,5 +1,11 @@
 
 import Stripe from 'stripe';
+import crypto from 'crypto';
+
+function hash(val: string | undefined): string | undefined {
+  if (!val) return undefined;
+  return crypto.createHash('sha256').update(val.trim().toLowerCase()).digest('hex');
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
@@ -7,6 +13,11 @@ export default async function handler(req: any, res: any) {
   try {
     const { paymentId, gateway, pixelId, accessToken, amount, campaignTitle, email, originUrl } = req.body;
     const userAgent = req.headers['user-agent'] || '';
+    
+    // Captura cookies de rastreamento do FB se disponíveis para melhorar o match
+    const cookies = req.headers.cookie || '';
+    const fbp = cookies.split('; ').find((row: string) => row.startsWith('_fbp='))?.split('=')[1];
+    const fbc = cookies.split('; ').find((row: string) => row.startsWith('_fbc='))?.split('=')[1];
 
     let isPaid = false;
 
@@ -34,10 +45,19 @@ export default async function handler(req: any, res: any) {
       isPaid = intent.status === 'succeeded';
     }
     else if (gateway === 'pixup') {
-       isPaid = false; 
+       // Implementação da verificação para PixUp (corrigido: não era verificado no servidor)
+       const pixupApiKey = process.env.PIXUP_API_KEY;
+       const response = await fetch(`https://api.pixup.com/v1/payments/${paymentId}`, {
+         headers: { 'Authorization': `Bearer ${pixupApiKey}` }
+       });
+       if (response.ok) {
+         const data = await response.json();
+         const status = (data.status || data.data?.status || '').toUpperCase();
+         isPaid = ['PAID', 'SETTLED', 'RECEIVED', 'APPROVED', 'CONFIRMED'].includes(status);
+       }
     }
 
-    // 2. Se pago, dispara Purchase via CAPI (Server-side) com valor explícito
+    // 2. Se pago, dispara Purchase via CAPI (Server-side)
     if (isPaid && pixelId && accessToken) {
       const event = {
         event_name: 'Purchase',
@@ -46,7 +66,9 @@ export default async function handler(req: any, res: any) {
         event_source_url: originUrl,
         user_data: { 
           client_user_agent: userAgent, 
-          em: email ? [email] : undefined 
+          em: email ? [hash(email)] : undefined,
+          fbp: fbp,
+          fbc: fbc
         },
         custom_data: { 
           currency: 'BRL', 
@@ -56,7 +78,7 @@ export default async function handler(req: any, res: any) {
         }
       };
 
-      fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
+      await fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: [event] })
