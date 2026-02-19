@@ -23,18 +23,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
 
     const initPayment = async () => {
       try {
-        const response = await paymentService.createPixPayment(total, donorData, config);
-        if (!isMounted) return;
-
-        // Pixel: Intenção de pagamento com valor
-        if ((window as any).fbq) {
-          (window as any).fbq('track', 'AddPaymentInfo', { 
+        // Pixel: InitiateCheckout -> acionado apenas quando abrir o QR code (abrir o modal)
+        if ((window as any).fbq && !(window as any).initiateCheckoutTracked) {
+          (window as any).fbq('track', 'InitiateCheckout', { 
             value: Number(total), 
             currency: 'BRL', 
             content_name: campaignTitle,
             content_type: 'product'
           });
+          (window as any).initiateCheckoutTracked = true;
         }
+
+        const response = await paymentService.createPixPayment(total, donorData, config);
+        if (!isMounted) return;
 
         let id = response.id;
         let qr = '';
@@ -60,14 +61,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
               setIsPaid(true);
               clearInterval(pollingRef.current);
               
-              // EVENTO REAL DE COMPRA COM VALOR
-              if ((window as any).fbq) {
+              // EVENTO REAL DE COMPRA COM VALOR E TRAVA
+              if ((window as any).fbq && !(window as any).purchaseTracked) {
                 (window as any).fbq('track', 'Purchase', {
                   value: Number(total),
                   currency: 'BRL',
                   content_name: campaignTitle,
                   content_type: 'product'
-                });
+                }, { eventID: id });
+                (window as any).purchaseTracked = true;
               }
             }
           }, 5000);

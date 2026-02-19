@@ -11,13 +11,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onDonateClick, config }) => 
   const [activeTab, setActiveTab] = useState<'sobre' | 'ajudaram'>('sobre');
 
   useEffect(() => {
-    if ((window as any).fbq && config.metaPixelId) {
+    if ((window as any).fbq && config.metaPixelId && !(window as any).viewContentTracked) {
       (window as any).fbq('track', 'ViewContent', {
         content_name: config.title,
         content_category: config.category,
         content_ids: [config.campaignId],
         content_type: 'product'
       });
+      (window as any).viewContentTracked = true;
     }
   }, [config.metaPixelId, config.title, config.category, config.campaignId]);
 

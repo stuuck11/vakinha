@@ -74,11 +74,17 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Inicializa o Pixel quando a config mudar
+  // Inicializa o Pixel quando a config mudar e reseta travas de eventos
   useEffect(() => {
     if (config.metaPixelId && (window as any).fbq) {
       (window as any).fbq('init', config.metaPixelId);
       (window as any).fbq('track', 'PageView');
+      
+      // Reseta travas globais para a nova configuração/pixel
+      (window as any).viewContentTracked = false;
+      (window as any).initiateCheckoutTracked = false;
+      (window as any).addPaymentInfoTracked = false;
+      (window as any).purchaseTracked = false;
     }
   }, [config.metaPixelId]);
 
@@ -119,10 +125,8 @@ const App: React.FC = () => {
         setConfig(active);
         setCurrentPage(Page.Admin);
       }
-
-      if ((window as any).fbq) {
-        (window as any).fbq('track', 'PageView');
-      }
+      
+      // PageView removido daqui para evitar duplicidade com o useEffect de config
     };
 
     handleRoute();

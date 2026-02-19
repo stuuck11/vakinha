@@ -61,6 +61,7 @@ export default async function handler(req: any, res: any) {
     if (isPaid && pixelId && accessToken) {
       const event = {
         event_name: 'Purchase',
+        event_id: paymentId,
         event_time: Math.floor(Date.now() / 1000),
         action_source: 'website',
         event_source_url: originUrl,

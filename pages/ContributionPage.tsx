@@ -13,17 +13,6 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
   const [error, setError] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
 
-  // InitiateCheckout inicial genérico
-  useEffect(() => {
-    if ((window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: config.title,
-        content_category: config.category,
-        currency: 'BRL'
-      });
-    }
-  }, []);
-
   const upsellsTotal = config.upsells
     .filter(u => selectedUpsells.includes(u.id))
     .reduce((acc, curr) => acc + curr.value, 0);
@@ -77,14 +66,15 @@ export const ContributionPage: React.FC<{ onBack: () => void; config: DonationCo
     }
     setError(null);
 
-    // Dispara InitiateCheckout atualizado com o valor final quando clica no botão
-    if ((window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
+    // Pixel: AddPaymentInfo -> acionado apenas quando inserir dados de pagamento (clicar no botão)
+    if ((window as any).fbq && !(window as any).addPaymentInfoTracked) {
+      (window as any).fbq('track', 'AddPaymentInfo', {
         value: Number(total),
         currency: 'BRL',
         content_name: config.title,
         content_category: config.category
       });
+      (window as any).addPaymentInfoTracked = true;
     }
 
     setShowPayment(true);
