@@ -1,9 +1,10 @@
 
 import crypto from 'crypto';
+import { db } from '../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 function hash(val: string | undefined): string | undefined {
   if (!val) return undefined;
-  // Remove pontos e traços do CPF antes de hashear para garantir compatibilidade com o Facebook
   const cleanVal = val.replace(/\D/g, '').trim().toLowerCase();
   return crypto.createHash('sha256').update(cleanVal).digest('hex');
 }
@@ -17,22 +18,45 @@ export default async function handler(req: any, res: any) {
     const body = req.body;
     const { event, payment } = body;
 
-    // Processa apenas eventos de pagamento recebido/confirmado
     if (event !== 'PAYMENT_RECEIVED' && event !== 'PAYMENT_CONFIRMED') {
       return res.status(200).json({ status: 'ignored' });
     }
 
     const { id, value, externalReference, customer: customerId } = payment;
 
-    // Se não houver metadados do pixel no externalReference, ignora
-    if (!externalReference || !externalReference.includes('|||')) {
-      return res.status(200).json({ status: 'no_meta' });
+    if (!externalReference) {
+      return res.status(200).json({ status: 'no_reference' });
     }
 
-    const [pixelId, accessToken, campaignTitle] = externalReference.split('|||');
-    const asaasApiKey = process.env.ASAAS_API_KEY;
+    let pixelId = '';
+    let accessToken = '';
+    let campaignTitle = 'Doação';
 
-    // Busca o CPF/CNPJ do cliente no Asaas para Advanced Matching no Facebook
+    // Lógica para recuperar as chaves (Se for o novo formato de ID ou o antigo concatenado)
+    if (externalReference.includes('|||')) {
+      [pixelId, accessToken, campaignTitle] = externalReference.split('|||');
+    } else {
+      // BUSCA NO FIRESTORE USANDO O ID CURTO
+      if (db) {
+        try {
+          const campDoc = await getDoc(doc(db, 'campaigns', externalReference));
+          if (campDoc.exists()) {
+            const data = campDoc.data();
+            pixelId = data.metaPixelId;
+            accessToken = data.metaAccessToken;
+            campaignTitle = data.title;
+          }
+        } catch (e) {
+          console.error("Erro ao buscar campanha no Firestore:", e);
+        }
+      }
+    }
+
+    if (!pixelId || !accessToken) {
+      return res.status(200).json({ status: 'meta_not_found' });
+    }
+
+    const asaasApiKey = process.env.ASAAS_API_KEY;
     let document = '';
     if (asaasApiKey && customerId) {
       try {
@@ -48,11 +72,9 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Dispara o Purchase via CAPI
-    // Usamos o CPF hasheado no campo external_id, que é um dos identificadores mais fortes do Meta
     const fbEvent = {
       event_name: 'Purchase',
-      event_id: id, // Deduplicação com o navegador
+      event_id: id,
       event_time: Math.floor(Date.now() / 1000),
       action_source: 'website',
       user_data: { 

@@ -13,7 +13,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { amount, name, email, cpfCnpj, campaignTitle, gateway, pixelId, accessToken, originUrl } = req.body;
+    const { amount, name, email, cpfCnpj, campaignTitle, gateway, pixelId, accessToken, campaignId, originUrl } = req.body;
     const userAgent = req.headers['user-agent'] || '';
     
     // Captura tracking cookies para CAPI
@@ -91,7 +91,9 @@ export default async function handler(req: any, res: any) {
       if (!asaasApiKey) throw new Error("ASAAS_API_KEY não configurada no servidor.");
 
       const baseUrl = 'https://api.asaas.com/v3';
-      const pixelMeta = `${pixelId}|||${accessToken}|||${campaignTitle.substring(0, 40)}`;
+      
+      // Enviamos apenas o ID da campanha (curto) para evitar erro de tamanho no Asaas
+      const externalReference = campaignId || pixelId;
 
       const custRes = await fetch(`${baseUrl}/customers`, {
         method: 'POST',
@@ -113,7 +115,7 @@ export default async function handler(req: any, res: any) {
           value: amount, 
           dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], 
           description: `Doação: ${campaignTitle}`,
-          externalReference: pixelMeta
+          externalReference: externalReference
         })
       });
       

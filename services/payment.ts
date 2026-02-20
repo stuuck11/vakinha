@@ -1,3 +1,4 @@
+
 import { DonationConfig } from '../types';
 
 export const paymentService = {
@@ -14,6 +15,7 @@ export const paymentService = {
         gateway: campaign.gateway,
         pixelId: campaign.metaPixelId,
         accessToken: campaign.metaAccessToken,
+        campaignId: campaign.id, // Adicionado para referência curta no Asaas
         originUrl: window.location.href
       })
     });
