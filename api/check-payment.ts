@@ -14,50 +14,65 @@ export default async function handler(req: any, res: any) {
     const { paymentId, gateway, pixelId, accessToken, amount, campaignTitle, email, originUrl } = req.body;
     const userAgent = req.headers['user-agent'] || '';
     
-    // Captura cookies de rastreamento do FB se disponíveis para melhorar o match
     const cookies = req.headers.cookie || '';
     const fbp = cookies.split('; ').find((row: string) => row.startsWith('_fbp='))?.split('=')[1];
     const fbc = cookies.split('; ').find((row: string) => row.startsWith('_fbc='))?.split('=')[1];
 
     let isPaid = false;
 
-    // 1. Verificação por Gateway
     if (gateway === 'asaas') {
       const asaasApiKey = process.env.ASAAS_API_KEY;
-      const response = await fetch(`https://api.asaas.com/v3/payments/${paymentId}`, {
-        headers: { 'access_token': asaasApiKey || '' }
-      });
-      const data = await response.json();
-      isPaid = data.status === 'RECEIVED' || data.status === 'CONFIRMED';
+      if (asaasApiKey && paymentId) {
+        const response = await fetch(`https://api.asaas.com/v3/payments/${paymentId}`, {
+          headers: { 'access_token': asaasApiKey }
+        });
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            isPaid = data.status === 'RECEIVED' || data.status === 'CONFIRMED';
+          } catch(e) {}
+        }
+      }
     } 
     else if (gateway === 'mercadopago') {
       const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-      const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-        headers: { 'Authorization': `Bearer ${mpToken}` }
-      });
-      const data = await response.json();
-      isPaid = data.status === 'approved';
+      if (mpToken && paymentId) {
+        const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+          headers: { 'Authorization': `Bearer ${mpToken}` }
+        });
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            isPaid = data.status === 'approved';
+          } catch(e) {}
+        }
+      }
     }
     else if (gateway === 'stripe') {
       const stripeKey = process.env.STRIPE_SECRET_KEY;
-      const stripe = new Stripe(stripeKey || '', { apiVersion: '2025-02-24.acacia' as any });
-      const intent = await stripe.paymentIntents.retrieve(paymentId);
-      isPaid = intent.status === 'succeeded';
+      if (stripeKey && paymentId) {
+        const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' as any });
+        const intent = await stripe.paymentIntents.retrieve(paymentId);
+        isPaid = intent.status === 'succeeded';
+      }
     }
     else if (gateway === 'pixup') {
-       // Implementação da verificação para PixUp (corrigido: não era verificado no servidor)
        const pixupApiKey = process.env.PIXUP_API_KEY;
-       const response = await fetch(`https://api.pixup.com/v1/payments/${paymentId}`, {
-         headers: { 'Authorization': `Bearer ${pixupApiKey}` }
-       });
-       if (response.ok) {
-         const data = await response.json();
-         const status = (data.status || data.data?.status || '').toUpperCase();
-         isPaid = ['PAID', 'SETTLED', 'RECEIVED', 'APPROVED', 'CONFIRMED'].includes(status);
+       if (pixupApiKey && paymentId) {
+         const response = await fetch(`https://api.pixup.com/v1/payments/${paymentId}`, {
+           headers: { 'Authorization': `Bearer ${pixupApiKey}` }
+         });
+         if (response.ok) {
+           const text = await response.text();
+           try {
+             const data = JSON.parse(text);
+             const status = (data.status || data.data?.status || '').toUpperCase();
+             isPaid = ['PAID', 'SETTLED', 'RECEIVED', 'APPROVED', 'CONFIRMED'].includes(status);
+           } catch(e) {}
+         }
        }
     }
 
-    // 2. Se pago, dispara Purchase via CAPI (Server-side)
     if (isPaid && pixelId && accessToken) {
       const event = {
         event_name: 'Purchase',
@@ -83,11 +98,11 @@ export default async function handler(req: any, res: any) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: [event] })
-      }).catch((e) => console.error("CAPI Error:", e));
+      }).catch(() => {});
     }
 
     return res.status(200).json({ paid: isPaid });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(200).json({ paid: false, error: err.message });
   }
 }

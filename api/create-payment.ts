@@ -27,6 +27,7 @@ export default async function handler(req: any, res: any) {
       const events = [
         {
           event_name: 'InitiateCheckout',
+          event_id: `init-${Date.now()}`,
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'website',
           event_source_url: originUrl,
@@ -39,6 +40,7 @@ export default async function handler(req: any, res: any) {
         },
         {
           event_name: 'AddPaymentInfo',
+          event_id: `add-${Date.now()}`,
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'website',
           event_source_url: originUrl,
@@ -59,6 +61,8 @@ export default async function handler(req: any, res: any) {
 
     if (gateway === 'pixup') {
       const pixupApiKey = process.env.PIXUP_API_KEY;
+      if (!pixupApiKey) throw new Error("PIXUP_API_KEY não configurada no servidor.");
+
       const response = await fetch('https://api.pixup.com/v1/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pixupApiKey}` },
@@ -68,7 +72,13 @@ export default async function handler(req: any, res: any) {
           payer: { name: name || 'Doador', email: email || 'doador@exemplo.com', document: cpfCnpj }
         })
       });
-      const data = await response.json();
+      
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON da PixUp: ${text.substring(0, 100)}`); }
+
+      if (!response.ok) throw new Error(data.message || data.error || 'Erro na PixUp');
+
       return res.status(200).json({ 
         provider: 'pixup', 
         id: data.id || data.data?.id,
@@ -78,22 +88,25 @@ export default async function handler(req: any, res: any) {
 
     if (gateway === 'asaas') {
       const asaasApiKey = process.env.ASAAS_API_KEY;
+      if (!asaasApiKey) throw new Error("ASAAS_API_KEY não configurada no servidor.");
+
       const baseUrl = 'https://api.asaas.com/v3';
-      
-      // Armazena dados do pixel no externalReference para o webhook (limite 255 chars)
-      // Formato: pixelId|||accessToken|||campaignTitle
       const pixelMeta = `${pixelId}|||${accessToken}|||${campaignTitle.substring(0, 40)}`;
 
       const custRes = await fetch(`${baseUrl}/customers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey! },
+        headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
         body: JSON.stringify({ name: name || 'Doador', email: email || 'doador@exemplo.com', cpfCnpj })
       });
-      const custData = await custRes.json();
       
+      const custText = await custRes.text();
+      let custData;
+      try { custData = JSON.parse(custText); } catch(e) { throw new Error(`Resposta não-JSON do Asaas (Clientes): ${custText.substring(0, 100)}`); }
+      if (!custRes.ok) throw new Error(custData.errors?.[0]?.description || 'Erro ao criar cliente no Asaas. Verifique seu Token.');
+
       const payRes = await fetch(`${baseUrl}/payments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey! },
+        headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
         body: JSON.stringify({ 
           customer: custData.id, 
           billingType: 'PIX', 
@@ -103,25 +116,44 @@ export default async function handler(req: any, res: any) {
           externalReference: pixelMeta
         })
       });
-      const payData = await payRes.json();
-      const qrRes = await fetch(`${baseUrl}/payments/${payData.id}/pixQrCode`, { method: 'GET', headers: { 'access_token': asaasApiKey! } });
-      const qrData = await qrRes.json();
+      
+      const payText = await payRes.text();
+      let payData;
+      try { payData = JSON.parse(payText); } catch(e) { throw new Error(`Resposta não-JSON do Asaas (Pagamentos): ${payText.substring(0, 100)}`); }
+      if (!payRes.ok) throw new Error(payData.errors?.[0]?.description || 'Erro ao criar pagamento no Asaas.');
+
+      const qrRes = await fetch(`${baseUrl}/payments/${payData.id}/pixQrCode`, { method: 'GET', headers: { 'access_token': asaasApiKey } });
+      const qrText = await qrRes.text();
+      let qrData;
+      try { qrData = JSON.parse(qrText); } catch(e) { throw new Error(`Resposta não-JSON do Asaas (QR Code): ${qrText.substring(0, 100)}`); }
+      if (!qrRes.ok) throw new Error('Erro ao gerar QR Code no Asaas.');
+
       return res.status(200).json({ provider: 'asaas', id: payData.id, pix: { encodedImage: qrData.encodedImage, payload: qrData.payload } });
     }
 
     if (gateway === 'mercadopago') {
       const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+      if (!mpToken) throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurada no servidor.");
+
       const response = await fetch('https://api.mercadopago.com/v1/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${mpToken}`, 'X-Idempotency-Key': `v-${Date.now()}` },
         body: JSON.stringify({ transaction_amount: Number(amount), description: `Doação: ${campaignTitle}`, payment_method_id: 'pix', payer: { email: email || 'doador@exemplo.com', identification: { type: cpfCnpj?.length > 11 ? 'CNPJ' : 'CPF', number: cpfCnpj } } })
       });
-      const data = await response.json();
+      
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON do Mercado Pago: ${text.substring(0, 100)}`); }
+      if (!response.ok) throw new Error(data.message || 'Erro no Mercado Pago. Verifique seu Token.');
+
       return res.status(200).json({ id: data.id, ...data });
     }
 
+    // Default to Stripe
     const stripeKey = process.env.STRIPE_SECRET_KEY;
-    const stripe = new Stripe(stripeKey!, { apiVersion: '2025-02-24.acacia' as any });
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY não configurada no servidor.");
+    
+    const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' as any });
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
       currency: 'brl',
@@ -131,6 +163,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ id: paymentIntent.id, next_action: paymentIntent.next_action });
 
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error("Payment API Error:", err);
+    return res.status(500).json({ error: err.message || 'Erro interno no servidor' });
   }
 }
