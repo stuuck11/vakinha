@@ -92,33 +92,43 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
 
   const copyToClipboard = () => {
     if (pixData) {
-      // Cópia silenciosa usando API moderna com fallback para execCommand
       const textToCopy = pixData.copyPaste;
       
-      const doVisualFeedback = () => {
+      // Cria elemento temporário para garantir cópia em dispositivos móveis
+      const textArea = document.createElement("textarea");
+      textArea.value = textToCopy;
+      
+      // Estilos para garantir que o elemento não seja visível e não quebre o layout
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      
+      textArea.focus();
+      textArea.select();
+      
+      // Suporte específico para iOS
+      textArea.setSelectionRange(0, 99999);
+      
+      let successful = false;
+      try {
+        successful = document.execCommand('copy');
+      } catch (err) {
+        successful = false;
+      }
+      
+      document.body.removeChild(textArea);
+
+      if (successful) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      };
-
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(textToCopy).then(doVisualFeedback).catch(() => {
-          // Fallback se falhar
-          const textArea = document.createElement("textarea");
-          textArea.value = textToCopy;
-          document.body.appendChild(textArea);
-          textArea.select();
-          try { document.execCommand('copy'); } catch (err) {}
-          document.body.removeChild(textArea);
-          doVisualFeedback();
-        });
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = textToCopy;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try { document.execCommand('copy'); } catch (err) {}
-        document.body.removeChild(textArea);
-        doVisualFeedback();
+      } else if (navigator.clipboard) {
+        // Fallback para API moderna caso execCommand falhe (ex: contextos seguros)
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }).catch(() => {});
       }
     }
   };
