@@ -92,9 +92,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
 
   const copyToClipboard = () => {
     if (pixData) {
-      navigator.clipboard.writeText(pixData.copyPaste);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Cópia silenciosa usando API moderna com fallback para execCommand
+      const textToCopy = pixData.copyPaste;
+      
+      const doVisualFeedback = () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(textToCopy).then(doVisualFeedback).catch(() => {
+          // Fallback se falhar
+          const textArea = document.createElement("textarea");
+          textArea.value = textToCopy;
+          document.body.appendChild(textArea);
+          textArea.select();
+          try { document.execCommand('copy'); } catch (err) {}
+          document.body.removeChild(textArea);
+          doVisualFeedback();
+        });
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(textArea);
+        doVisualFeedback();
+      }
     }
   };
 
@@ -154,9 +179,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
               </div>
               <button 
                 onClick={copyToClipboard} 
-                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all duration-300 border-2 ${copied ? 'bg-[#24CA68] border-[#24CA68]' : 'bg-[#EEFFE6] border-[#24CA68]/20'}`}
+                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all duration-500 border-2 ${copied ? 'bg-[#24CA68] border-[#24CA68] scale-[1.02] shadow-lg shadow-green-100' : 'bg-[#EEFFE6] border-[#24CA68]/20 hover:border-[#24CA68]/40'}`}
               >
-                <span className={`font-black text-sm transition-colors duration-300 ${copied ? 'text-white' : 'text-[#24CA68]'}`}>
+                <span className={`font-black text-sm transition-colors duration-500 ${copied ? 'text-white' : 'text-[#24CA68]'}`}>
                   {copied ? 'Código Copiado! ✓' : 'Copiar Código PIX'}
                 </span>
               </button>
