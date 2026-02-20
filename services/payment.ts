@@ -15,7 +15,8 @@ export const paymentService = {
         gateway: campaign.gateway,
         pixelId: campaign.metaPixelId,
         accessToken: campaign.metaAccessToken,
-        campaignId: campaign.id, // Adicionado para referência curta no Asaas
+        campaignId: campaign.campaignId,
+        id: campaign.id, // Envia o ID interno (camp-...) para o externalReference do Asaas
         originUrl: window.location.href
       })
     });

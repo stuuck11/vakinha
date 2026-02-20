@@ -92,13 +92,13 @@ export default async function handler(req: any, res: any) {
 
       const baseUrl = 'https://api.asaas.com/v3';
       
-      // Enviamos apenas o ID da campanha (curto) para evitar erro de tamanho no Asaas
-      const externalReference = campaignId || pixelId;
+      // O externalReference DEVE ser o ID interno da campanha (ex: camp-123...) para que o Webhook encontre no Firestore
+      const externalReference = req.body.id || campaignId;
 
       const custRes = await fetch(`${baseUrl}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey },
-        body: JSON.stringify({ name: name || 'Doador', email: email || 'doador@exemplo.com', cpfCnpj })
+        body: JSON.stringify({ name: name || 'Doador', email: email || '', cpfCnpj })
       });
       
       const custText = await custRes.text();
