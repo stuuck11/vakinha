@@ -79,16 +79,29 @@ export default async function handler(req: any, res: any) {
     if (gateway === 'asaas') {
       const asaasApiKey = process.env.ASAAS_API_KEY;
       const baseUrl = 'https://api.asaas.com/v3';
+      
+      // Armazena dados do pixel no externalReference para o webhook (limite 255 chars)
+      // Formato: pixelId|||accessToken|||campaignTitle
+      const pixelMeta = `${pixelId}|||${accessToken}|||${campaignTitle.substring(0, 40)}`;
+
       const custRes = await fetch(`${baseUrl}/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey! },
         body: JSON.stringify({ name: name || 'Doador', email: email || 'doador@exemplo.com', cpfCnpj })
       });
       const custData = await custRes.json();
+      
       const payRes = await fetch(`${baseUrl}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'access_token': asaasApiKey! },
-        body: JSON.stringify({ customer: custData.id, billingType: 'PIX', value: amount, dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], description: `Doação: ${campaignTitle}` })
+        body: JSON.stringify({ 
+          customer: custData.id, 
+          billingType: 'PIX', 
+          value: amount, 
+          dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], 
+          description: `Doação: ${campaignTitle}`,
+          externalReference: pixelMeta
+        })
       });
       const payData = await payRes.json();
       const qrRes = await fetch(`${baseUrl}/payments/${payData.id}/pixQrCode`, { method: 'GET', headers: { 'access_token': asaasApiKey! } });
