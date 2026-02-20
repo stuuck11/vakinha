@@ -16,6 +16,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
   const [pixData, setPixData] = useState<{id?: string, qrCode?: string, copyPaste: string} | null>(null);
   const [isPaid, setIsPaid] = useState(false);
   const [error, setError] = useState<React.ReactNode | null>(null);
+  const [copied, setCopied] = useState(false);
   const pollingRef = useRef<any>(null);
 
   useEffect(() => {
@@ -92,7 +93,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
   const copyToClipboard = () => {
     if (pixData) {
       navigator.clipboard.writeText(pixData.copyPaste);
-      alert('Código PIX copiado!');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -150,8 +152,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
                 <span className="text-[10px] text-gray-400 uppercase tracking-widest font-black">Total a pagar</span>
                 <div className="text-4xl font-black text-gray-900">R$ {total.toFixed(2).replace('.', ',')}</div>
               </div>
-              <button onClick={copyToClipboard} className="w-full bg-[#EEFFE6] border-2 border-[#24CA68]/20 py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                <span className="font-black text-sm text-[#24CA68]">Copiar Código PIX</span>
+              <button 
+                onClick={copyToClipboard} 
+                className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all duration-300 border-2 ${copied ? 'bg-[#24CA68] border-[#24CA68]' : 'bg-[#EEFFE6] border-[#24CA68]/20'}`}
+              >
+                <span className={`font-black text-sm transition-colors duration-300 ${copied ? 'text-white' : 'text-[#24CA68]'}`}>
+                  {copied ? 'Código Copiado! ✓' : 'Copiar Código PIX'}
+                </span>
               </button>
             </div>
             <div className="p-6 bg-gray-50 text-center">
