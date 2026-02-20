@@ -7,7 +7,9 @@ function hash(val: string | undefined): string | undefined {
   if (!val) return undefined;
   const cleanVal = val.toLowerCase().trim();
   // Filtra e-mails de placeholder do sistema para não prejudicar o match do Meta
-  if (cleanVal.includes('exemplo') || cleanVal.includes('test') || cleanVal === 'doador@doador.com' || !cleanVal.includes('@')) return undefined;
+  if (cleanVal.includes('@')) {
+    if (cleanVal.includes('exemplo') || cleanVal.includes('test') || cleanVal === 'doador@doador.com') return undefined;
+  }
   return crypto.createHash('sha256').update(cleanVal).digest('hex');
 }
 
