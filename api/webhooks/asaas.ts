@@ -18,7 +18,17 @@ export default async function handler(req: any, res: any) {
 
   try {
     const body = req.body;
+    if (!body || typeof body !== 'object') {
+      console.error("Webhook Asaas: Corpo da requisição inválido");
+      return res.status(200).json({ status: 'invalid_body' });
+    }
+
     const { event, payment } = body;
+
+    if (!payment) {
+      console.error("Webhook Asaas: Objeto payment ausente");
+      return res.status(200).json({ status: 'no_payment' });
+    }
 
     // Asaas envia PAYMENT_CONFIRMED ou PAYMENT_RECEIVED para pagamentos aprovados
     if (event !== 'PAYMENT_RECEIVED' && event !== 'PAYMENT_CONFIRMED') {
@@ -37,14 +47,14 @@ export default async function handler(req: any, res: any) {
     let campaignTitle = 'Doação';
 
     // 1. Localiza a campanha no Firestore para pegar Pixel e Token
-    if (db) {
+    if (db && externalReference) {
       try {
-        const campDoc = await getDoc(doc(db, 'campaigns', externalReference));
+        const campDoc = await getDoc(doc(db, 'campaigns', String(externalReference)));
         if (campDoc.exists()) {
           const data = campDoc.data();
-          pixelId = data.metaPixelId;
-          accessToken = data.metaAccessToken;
-          campaignTitle = data.title;
+          pixelId = data.metaPixelId || '';
+          accessToken = data.metaAccessToken || '';
+          campaignTitle = data.title || 'Doação';
         }
       } catch (e) {
         console.error("Erro Firestore Webhook:", e);
@@ -62,18 +72,18 @@ export default async function handler(req: any, res: any) {
     
     if (asaasApiKey && customerId) {
       try {
-        const custRes = await fetch(`https://api.asaas.com/v3/customers/${customerId}`, {
-          headers: { 'access_token': asaasApiKey }
+        const custRes = await fetch(`https://api.asaas.com/v3/customers/${String(customerId)}`, {
+          headers: { 'access_token': String(asaasApiKey) }
         });
         if (custRes.ok) {
           const custData = await custRes.json();
           
-          const nomeCompleto = (custData.name || '').trim();
+          const nomeCompleto = String(custData.name || '').trim();
           const partesNome = nomeCompleto.split(/\s+/);
           const firstName = partesNome[0];
           const lastName = partesNome.length > 1 ? partesNome[partesNome.length - 1] : undefined;
           
-          const cpfLimpo = (custData.cpfCnpj || '').replace(/\D/g, '');
+          const cpfLimpo = String(custData.cpfCnpj || '').replace(/\D/g, '');
 
           userData = {
             // Correspondência via CPF (external_id é o campo padrão para identificadores únicos como CPF)
@@ -82,8 +92,8 @@ export default async function handler(req: any, res: any) {
             fn: firstName ? [hash(firstName)] : undefined,
             ln: lastName ? [hash(lastName)] : undefined,
             // Outros campos se disponíveis
-            ph: custData.mobilePhone ? [hash(custData.mobilePhone.replace(/\D/g, ''))] : undefined,
-            em: hash(custData.email) ? [hash(custData.email)] : undefined
+            ph: custData.mobilePhone ? [hash(String(custData.mobilePhone).replace(/\D/g, ''))] : undefined,
+            em: custData.email ? [hash(String(custData.email))] : undefined
           };
         }
       } catch (e) {
