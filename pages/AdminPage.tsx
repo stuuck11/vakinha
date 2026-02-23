@@ -107,11 +107,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       ],
       isActive: false,
       supporters: [],
-      gateway: 'pixup',
+      gateway: 'pagbank',
       stripeConfig: { publicKey: '', isTestMode: true },
       mercadopagoConfig: { publicKey: '' },
       asaasConfig: { apiKey: '' },
       pixupConfig: { apiKey: '' },
+      stoneConfig: { apiKey: '' },
+      braipConfig: { token: '', checkoutCode: '' },
+      pagbankConfig: { token: '' },
       metaPixelId: '',
       metaAccessToken: ''
     };
@@ -369,11 +372,19 @@ service cloud.firestore {
                 <div className="space-y-1 border-t pt-3">
                   <span className="text-[10px] font-black text-[#24CA68] uppercase">Gateway</span>
                   <select value={formData.gateway} onChange={e => setFormData({...formData, gateway: e.target.value as PaymentGateway})} className="w-full p-3 rounded-lg border font-bold">
+                    <option value="pagbank">PagBank</option>
+                    <option value="braip">Braip</option>
                     <option value="pixup">PixUp</option>
                     <option value="asaas">Asaas</option>
+                    <option value="stone">Stone (Pagar.me)</option>
                     <option value="mercadopago">Mercado Pago</option>
                     <option value="stripe">Stripe</option>
                   </select>
+                </div>
+
+                <div className="space-y-1 border-t pt-3">
+                  <span className="text-[10px] font-black text-[#24CA68] uppercase">Braip Checkout Code</span>
+                  <input value={formData.braipConfig?.checkoutCode || ''} onChange={e => setFormData({...formData, braipConfig: { ...formData.braipConfig, checkoutCode: e.target.value }})} className="w-full border p-3 rounded-lg bg-white" />
                 </div>
 
                 <div className="space-y-1 border-t pt-3">

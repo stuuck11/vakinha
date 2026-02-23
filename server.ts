@@ -8,6 +8,9 @@ import { fileURLToPath } from 'url';
 import createPaymentHandler from './api/create-payment';
 import checkPaymentHandler from './api/check-payment';
 import asaasWebhookHandler from './api/webhooks/asaas';
+import stoneWebhookHandler from './api/webhooks/stone';
+import braipWebhookHandler from './api/webhooks/braip';
+import pagbankWebhookHandler from './api/webhooks/pagbank';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,6 +26,9 @@ async function startServer() {
   app.post(['/api/create-payment', '/api/create-payment/'], createPaymentHandler);
   app.post(['/api/check-payment', '/api/check-payment/'], checkPaymentHandler);
   app.post(['/api/webhooks/asaas', '/api/webhooks/asaas/'], asaasWebhookHandler);
+  app.post(['/api/webhooks/stone', '/api/webhooks/stone/'], stoneWebhookHandler);
+  app.post(['/api/webhooks/braip', '/api/webhooks/braip/'], braipWebhookHandler);
+  app.post(['/api/webhooks/pagbank', '/api/webhooks/pagbank/'], pagbankWebhookHandler);
 
   // Health check
   app.get('/api/health', (req: express.Request, res: express.Response) => {

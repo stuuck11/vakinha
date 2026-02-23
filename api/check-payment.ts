@@ -34,6 +34,49 @@ export default async function handler(req: any, res: any) {
         }
       }
     } 
+    else if (gateway === 'pagbank') {
+      const pagbankToken = process.env.PAGBANK_TOKEN;
+      if (pagbankToken && paymentId) {
+        const response = await fetch(`https://api.pagseguro.com/orders/${paymentId}`, {
+          headers: { 'Authorization': `Bearer ${pagbankToken}` }
+        });
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            // Status PAID ou PAID_OUT
+            isPaid = data.status === 'PAID' || data.status === 'PAID_OUT';
+          } catch(e) {}
+        }
+      }
+    }
+    else if (gateway === 'braip') {
+      const braipToken = process.env.BRAIP_TOKEN;
+      if (braipToken && paymentId) {
+        const response = await fetch(`https://ev.braip.com/api/v1/transactions/${paymentId}?token=${braipToken}`);
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            // Status 2 = Pago na Braip
+            isPaid = data.status === 2 || data.data?.status === 2;
+          } catch(e) {}
+        }
+      }
+    }
+    else if (gateway === 'stone') {
+      const stoneApiKey = process.env.STONE_API_KEY;
+      if (stoneApiKey && paymentId) {
+        const auth = Buffer.from(`${stoneApiKey}:`).toString('base64');
+        const response = await fetch(`https://api.pagar.me/core/v5/orders/${paymentId}`, {
+          headers: { 'Authorization': `Basic ${auth}` }
+        });
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            isPaid = data.status === 'paid';
+          } catch(e) {}
+        }
+      }
+    }
     else if (gateway === 'mercadopago') {
       const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
       if (mpToken && paymentId) {

@@ -59,6 +59,160 @@ export default async function handler(req: any, res: any) {
       }).catch(() => {});
     }
 
+    if (gateway === 'pagbank') {
+      const pagbankToken = process.env.PAGBANK_TOKEN;
+      if (!pagbankToken) throw new Error("PAGBANK_TOKEN não configurada no servidor.");
+
+      const response = await fetch('https://api.pagseguro.com/orders', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${pagbankToken}` 
+        },
+        body: JSON.stringify({
+          reference_id: `doacao-${Date.now()}`,
+          customer: {
+            name: name || 'Doador',
+            email: email || 'doador@exemplo.com',
+            tax_id: cpfCnpj?.replace(/\D/g, '')
+          },
+          items: [{
+            name: `Doação: ${campaignTitle}`,
+            quantity: 1,
+            unit_amount: Math.round(amount * 100)
+          }],
+          qr_codes: [{
+            amount: { value: Math.round(amount * 100) },
+            expiration_date: new Date(Date.now() + 86400000).toISOString() // 24h
+          }],
+          notification_urls: [`${process.env.APP_URL || ''}/api/webhooks/pagbank`]
+        })
+      });
+
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON do PagBank: ${text.substring(0, 100)}`); }
+
+      if (!response.ok) {
+        throw new Error(data.error_messages?.[0]?.description || 'Erro no PagBank');
+      }
+
+      const qrCode = data.qr_codes?.[0];
+      const copyPaste = qrCode?.links?.find((l: any) => l.rel === 'qr_code.text')?.href;
+      const qrCodeImage = qrCode?.links?.find((l: any) => l.rel === 'qr_code.png')?.href;
+
+      return res.status(200).json({ 
+        provider: 'pagbank', 
+        id: data.id,
+        pix: { 
+          payload: copyPaste,
+          encodedImage: qrCodeImage 
+        }
+      });
+    }
+
+    if (gateway === 'braip') {
+      const braipToken = process.env.BRAIP_TOKEN;
+      if (!braipToken) throw new Error("BRAIP_TOKEN não configurada no servidor.");
+
+      // Braip requer um checkoutCode que geralmente é fixo por produto/valor.
+      // Se o usuário quiser valores dinâmicos, ele precisaria de múltiplos checkouts ou suporte da Braip para isso.
+      const response = await fetch('https://ev.braip.com/api/v1/checkout/transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: braipToken,
+          checkout: req.body.braipCheckoutCode || campaignId, // Tenta pegar o código do checkout
+          payment_method: 4, // 4 = PIX na Braip
+          name: name || 'Doador',
+          email: email || 'doador@exemplo.com',
+          document: cpfCnpj,
+          amount: amount // Braip aceita amount em algumas configurações de checkout aberto
+        })
+      });
+
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON da Braip: ${text.substring(0, 100)}`); }
+
+      if (!response.ok || data.status === 'error') {
+        throw new Error(data.message || data.error || 'Erro na Braip');
+      }
+
+      // Braip retorna os dados do PIX em data.data
+      const pixData = data.data || data;
+      
+      return res.status(200).json({ 
+        provider: 'braip', 
+        id: pixData.transaction_id || pixData.id,
+        pix: { 
+          payload: pixData.pix_code || pixData.pix_payload,
+          encodedImage: pixData.pix_qr_code || pixData.qr_code 
+        }
+      });
+    }
+
+    if (gateway === 'stone') {
+      const stoneApiKey = process.env.STONE_API_KEY;
+      if (!stoneApiKey) throw new Error("STONE_API_KEY não configurada no servidor.");
+
+      const auth = Buffer.from(`${stoneApiKey}:`).toString('base64');
+      
+      const response = await fetch('https://api.pagar.me/core/v5/orders', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Basic ${auth}` 
+        },
+        body: JSON.stringify({
+          items: [{
+            amount: Math.round(amount * 100),
+            description: `Doação: ${campaignTitle}`,
+            quantity: 1
+          }],
+          customer: {
+            name: name || 'Doador',
+            email: email || 'doador@exemplo.com',
+            type: cpfCnpj?.length > 11 ? 'corporation' : 'individual',
+            document: cpfCnpj
+          },
+          payments: [{
+            payment_method: 'pix',
+            pix: {
+              expires_in: 86400 // 24 horas
+            }
+          }],
+          metadata: {
+            campaignId: campaignId || req.body.id
+          }
+        })
+      });
+
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON da Stone: ${text.substring(0, 100)}`); }
+
+      if (!response.ok) {
+        const errorMsg = data.message || (data.errors ? Object.values(data.errors).flat().join(', ') : 'Erro na Stone');
+        throw new Error(errorMsg);
+      }
+
+      const pixData = data.checkouts?.[0]?.payment?.pix || data.payments?.[0]?.pix;
+      // Pagar.me v5 retorna o QR Code em payments[0].pix
+      const payment = data.payments?.[0];
+      
+      return res.status(200).json({ 
+        provider: 'stone', 
+        id: data.id,
+        next_action: { 
+          pix_display_qr_code: { 
+            image_url_svg: payment?.pix?.qr_code_url, 
+            data: payment?.pix?.qr_code 
+          } 
+        } 
+      });
+    }
+
     if (gateway === 'pixup') {
       const pixupApiKey = process.env.PIXUP_API_KEY;
       if (!pixupApiKey) throw new Error("PIXUP_API_KEY não configurada no servidor.");
