@@ -107,7 +107,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       ],
       isActive: false,
       supporters: [],
-      gateway: 'pagbank',
+      gateway: 'simpay',
       stripeConfig: { publicKey: '', isTestMode: true },
       mercadopagoConfig: { publicKey: '' },
       asaasConfig: { apiKey: '' },
@@ -115,6 +115,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       stoneConfig: { apiKey: '' },
       braipConfig: { token: '', checkoutCode: '' },
       pagbankConfig: { token: '' },
+      simpayConfig: { token: '' },
       metaPixelId: '',
       metaAccessToken: ''
     };
@@ -372,6 +373,7 @@ service cloud.firestore {
                 <div className="space-y-1 border-t pt-3">
                   <span className="text-[10px] font-black text-[#24CA68] uppercase">Gateway</span>
                   <select value={formData.gateway} onChange={e => setFormData({...formData, gateway: e.target.value as PaymentGateway})} className="w-full p-3 rounded-lg border font-bold">
+                    <option value="simpay">SimPay</option>
                     <option value="pagbank">PagBank</option>
                     <option value="braip">Braip</option>
                     <option value="pixup">PixUp</option>

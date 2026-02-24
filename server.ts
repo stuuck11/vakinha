@@ -11,6 +11,7 @@ import asaasWebhookHandler from './api/webhooks/asaas';
 import stoneWebhookHandler from './api/webhooks/stone';
 import braipWebhookHandler from './api/webhooks/braip';
 import pagbankWebhookHandler from './api/webhooks/pagbank';
+import simpayWebhookHandler from './api/webhooks/simpay';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +30,7 @@ async function startServer() {
   app.post(['/api/webhooks/stone', '/api/webhooks/stone/'], stoneWebhookHandler);
   app.post(['/api/webhooks/braip', '/api/webhooks/braip/'], braipWebhookHandler);
   app.post(['/api/webhooks/pagbank', '/api/webhooks/pagbank/'], pagbankWebhookHandler);
+  app.post(['/api/webhooks/simpay', '/api/webhooks/simpay/'], simpayWebhookHandler);
 
   // Health check
   app.get('/api/health', (req: express.Request, res: express.Response) => {

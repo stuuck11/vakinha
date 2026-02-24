@@ -59,6 +59,48 @@ export default async function handler(req: any, res: any) {
       }).catch(() => {});
     }
 
+    if (gateway === 'simpay') {
+      const simpayToken = process.env.SIMPAY_TOKEN;
+      if (!simpayToken) throw new Error("SIMPAY_TOKEN não configurada no servidor.");
+
+      const response = await fetch('https://api.simpay.com.br/v1/pix/qrcode', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${simpayToken}` 
+        },
+        body: JSON.stringify({
+          amount: amount,
+          description: `Doação: ${campaignTitle}`,
+          external_id: `doacao-${Date.now()}`,
+          payer: {
+            name: name || 'Doador',
+            document: cpfCnpj?.replace(/\D/g, ''),
+            email: email || 'doador@exemplo.com'
+          },
+          postback_url: `${process.env.APP_URL || ''}/api/webhooks/simpay`
+        })
+      });
+
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON da SimPay: ${text.substring(0, 100)}`); }
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Erro na SimPay');
+      }
+
+      // SimPay costuma retornar pix_payload e qrcode_image
+      return res.status(200).json({ 
+        provider: 'simpay', 
+        id: data.id || data.transaction_id,
+        pix: { 
+          payload: data.pix_payload || data.copy_paste,
+          encodedImage: data.qrcode_image || data.qrcode_base64 
+        }
+      });
+    }
+
     if (gateway === 'pagbank') {
       const pagbankToken = process.env.PAGBANK_TOKEN;
       if (!pagbankToken) throw new Error("PAGBANK_TOKEN não configurada no servidor.");

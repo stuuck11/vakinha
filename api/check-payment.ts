@@ -34,6 +34,21 @@ export default async function handler(req: any, res: any) {
         }
       }
     } 
+    else if (gateway === 'simpay') {
+      const simpayToken = process.env.SIMPAY_TOKEN;
+      if (simpayToken && paymentId) {
+        const response = await fetch(`https://api.simpay.com.br/v1/pix/status/${paymentId}`, {
+          headers: { 'Authorization': `Bearer ${simpayToken}` }
+        });
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            // Status PAID ou similar
+            isPaid = data.status === 'PAID' || data.status === 'paid' || data.paid === true;
+          } catch(e) {}
+        }
+      }
+    }
     else if (gateway === 'pagbank') {
       const pagbankToken = process.env.PAGBANK_TOKEN;
       if (pagbankToken && paymentId) {
