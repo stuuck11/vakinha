@@ -38,7 +38,7 @@ export default async function handler(req: any, res: any) {
       const simpayToken = process.env.SIMPAY_TOKEN;
       const simpayEmail = process.env.SIMPAY_EMAIL;
       if (simpayToken && simpayEmail && paymentId) {
-        const response = await fetch(`https://somossimpay.com.br/api/v1/pix/status/${paymentId}`, {
+        const response = await fetch(`https://api.somossimpay.com.br/api/v1/gateway/pix-status/${paymentId}`, {
           headers: { 
             'app-email': simpayEmail,
             'app-token': simpayToken
