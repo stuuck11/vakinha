@@ -60,14 +60,19 @@ export default async function handler(req: any, res: any) {
     }
 
     if (gateway === 'simpay') {
-      const simpayToken = process.env.SIMPAY_TOKEN;
-      if (!simpayToken) throw new Error("SIMPAY_TOKEN não configurada no servidor.");
+      const simpayToken = process.env.SIMPAY_TOKEN; // Senha da API
+      const simpayEmail = process.env.SIMPAY_EMAIL; // Email da API
+      
+      if (!simpayToken || !simpayEmail) {
+        throw new Error("SIMPAY_TOKEN ou SIMPAY_EMAIL não configurados no servidor.");
+      }
 
-      const response = await fetch('https://api.simpay.com.br/v1/pix/qrcode', {
+      const response = await fetch('https://api.somossimpay.com.br/v1/pix/qrcode', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${simpayToken}` 
+          'Content-Type': 'application/json',
+          'app-email': simpayEmail,
+          'app-token': simpayToken
         },
         body: JSON.stringify({
           amount: amount,
@@ -90,13 +95,12 @@ export default async function handler(req: any, res: any) {
         throw new Error(data.message || data.error || 'Erro na SimPay');
       }
 
-      // SimPay costuma retornar pix_payload e qrcode_image
       return res.status(200).json({ 
         provider: 'simpay', 
         id: data.id || data.transaction_id,
         pix: { 
-          payload: data.pix_payload || data.copy_paste,
-          encodedImage: data.qrcode_image || data.qrcode_base64 
+          payload: data.pix_payload || data.copy_paste || data.pix_code,
+          encodedImage: data.qrcode_image || data.qrcode_base64 || data.pix_qr_code
         }
       });
     }

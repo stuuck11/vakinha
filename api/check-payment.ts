@@ -36,15 +36,19 @@ export default async function handler(req: any, res: any) {
     } 
     else if (gateway === 'simpay') {
       const simpayToken = process.env.SIMPAY_TOKEN;
-      if (simpayToken && paymentId) {
-        const response = await fetch(`https://api.simpay.com.br/v1/pix/status/${paymentId}`, {
-          headers: { 'Authorization': `Bearer ${simpayToken}` }
+      const simpayEmail = process.env.SIMPAY_EMAIL;
+      if (simpayToken && simpayEmail && paymentId) {
+        const response = await fetch(`https://api.somossimpay.com.br/v1/pix/status/${paymentId}`, {
+          headers: { 
+            'app-email': simpayEmail,
+            'app-token': simpayToken
+          }
         });
         if (response.ok) {
           try {
             const data = await response.json();
             // Status PAID ou similar
-            isPaid = data.status === 'PAID' || data.status === 'paid' || data.paid === true;
+            isPaid = data.status === 'PAID' || data.status === 'paid' || data.paid === true || data.data?.status === 'PAID';
           } catch(e) {}
         }
       }
