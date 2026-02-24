@@ -68,21 +68,32 @@ export default async function handler(req: any, res: any) {
       }
 
       // 1. Obter Token de Acesso (OAuth 2.0)
-      const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
+      // Tentando sem a barra final para evitar erro 404/HTML em alguns servidores
+      const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'accept': 'application/json' },
         body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
       });
 
-      const authData = await authRes.json();
-      if (!authRes.ok || !authData.access_token) {
-        throw new Error(authData.message || "Erro ao autenticar na SimPay (OAuth)");
+      const authText = await authRes.text();
+      if (!authRes.ok) {
+        if (authText.includes('<!DOCTYPE html>')) {
+          throw new Error("A SimPay bloqueou a requisição (Firewall). Você precisa pedir ao suporte deles para desativar a Whitelist de IP para sua conta.");
+        }
+        throw new Error(`Erro na autenticação SimPay (${authRes.status}): ${authText.substring(0, 100)}`);
+      }
+
+      let authData;
+      try {
+        authData = JSON.parse(authText);
+      } catch (e) {
+        throw new Error("A SimPay retornou um formato inválido. Verifique se o IP da Vercel está liberado.");
       }
 
       const accessToken = authData.access_token;
 
       // 2. Gerar PIX (API v2)
-      const response = await fetch('https://api.somossimpay.com.br/v2/pix/payments/', {
+      const response = await fetch('https://api.somossimpay.com.br/v2/pix/payments', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -102,14 +113,12 @@ export default async function handler(req: any, res: any) {
         })
       });
 
-      const text = await response.text();
-      let data;
-      try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON da SimPay: ${text.substring(0, 100)}`); }
-
+      const resText = await response.text();
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Erro ao gerar PIX na SimPay');
+        throw new Error(`Erro ao gerar PIX (${response.status}): ${resText.substring(0, 100)}`);
       }
 
+      let data = JSON.parse(resText);
       return res.status(200).json({ 
         provider: 'simpay', 
         id: data.id || data.transaction_id,
