@@ -68,8 +68,7 @@ export default async function handler(req: any, res: any) {
       }
 
       // 1. Obter Token de Acesso (OAuth 2.0)
-      // Tentando sem a barra final para evitar erro 404/HTML em alguns servidores
-      const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token', {
+      const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'accept': 'application/json' },
         body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
@@ -93,7 +92,7 @@ export default async function handler(req: any, res: any) {
       const accessToken = authData.access_token;
 
       // 2. Gerar PIX (API v2)
-      const response = await fetch('https://api.somossimpay.com.br/v2/pix/payments', {
+      const response = await fetch('https://api.somossimpay.com.br/v2/pix/payments/', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
