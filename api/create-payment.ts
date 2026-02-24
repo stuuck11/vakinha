@@ -67,7 +67,7 @@ export default async function handler(req: any, res: any) {
         throw new Error("SIMPAY_TOKEN ou SIMPAY_EMAIL não configurados no servidor.");
       }
 
-      const response = await fetch('https://api.somossimpay.com.br/api/v1/pix/qrcode', {
+      const response = await fetch('https://somossimpay.com.br/api/v1/pix/qrcode', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
