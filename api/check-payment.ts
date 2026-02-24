@@ -42,7 +42,10 @@ export default async function handler(req: any, res: any) {
         // 1. Obter Token
         const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          },
           body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
         });
         const authData = await authRes.json();
@@ -50,7 +53,10 @@ export default async function handler(req: any, res: any) {
         if (authRes.ok && authData.access_token) {
           // 2. Consultar Status
           const response = await fetch(`https://api.somossimpay.com.br/v2/pix/payments/${paymentId}/`, {
-            headers: { 'Authorization': `Bearer ${authData.access_token}` }
+            headers: { 
+              'Authorization': `Bearer ${authData.access_token}`,
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
           });
           if (response.ok) {
             try {

@@ -70,14 +70,20 @@ export default async function handler(req: any, res: any) {
       // 1. Obter Token de Acesso (OAuth 2.0)
       const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'accept': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Origin': process.env.APP_URL || '',
+          'Referer': process.env.APP_URL || ''
+        },
         body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
       });
 
       const authText = await authRes.text();
       if (!authRes.ok) {
-        if (authText.includes('<!DOCTYPE html>')) {
-          throw new Error("A SimPay bloqueou a requisição (Firewall). Você precisa pedir ao suporte deles para desativar a Whitelist de IP para sua conta.");
+        if (authText.includes('<!DOCTYPE html>') || authText.includes('<!DOCTYPE HTML>')) {
+          throw new Error("A SimPay bloqueou a requisição (Firewall/IP Whitelist). Se o User-Agent não resolveu, você precisará de um Proxy com IP Fixo.");
         }
         throw new Error(`Erro na autenticação SimPay (${authRes.status}): ${authText.substring(0, 100)}`);
       }
@@ -97,7 +103,10 @@ export default async function handler(req: any, res: any) {
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
-          'accept': 'application/json'
+          'accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Origin': process.env.APP_URL || '',
+          'Referer': process.env.APP_URL || ''
         },
         body: JSON.stringify({
           amount: amount,
