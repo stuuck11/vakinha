@@ -34,6 +34,18 @@ export default async function handler(req: any, res: any) {
         }
       }
     } 
+    else if (gateway === 'appmax') {
+      const appmaxToken = process.env.APPMAX_TOKEN;
+      if (appmaxToken && paymentId) {
+        const response = await fetch(`https://admin.appmax.com.br/api/v3/order/status?access-token=${appmaxToken}&order_id=${paymentId}`);
+        if (response.ok) {
+          try {
+            const data = await response.json();
+            isPaid = data.data?.status === 'pago';
+          } catch(e) {}
+        }
+      }
+    }
     else if (gateway === 'simpay') {
       const clientId = process.env.SIMPAY_EMAIL;
       const clientSecret = process.env.SIMPAY_TOKEN;

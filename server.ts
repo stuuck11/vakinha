@@ -12,6 +12,7 @@ import stoneWebhookHandler from './api/webhooks/stone';
 import braipWebhookHandler from './api/webhooks/braip';
 import pagbankWebhookHandler from './api/webhooks/pagbank';
 import simpayWebhookHandler from './api/webhooks/simpay';
+import appmaxWebhookHandler from './api/webhooks/appmax';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,7 @@ async function startServer() {
   app.post(['/api/webhooks/braip', '/api/webhooks/braip/'], braipWebhookHandler);
   app.post(['/api/webhooks/pagbank', '/api/webhooks/pagbank/'], pagbankWebhookHandler);
   app.post(['/api/webhooks/simpay', '/api/webhooks/simpay/'], simpayWebhookHandler);
+  app.post(['/api/webhooks/appmax', '/api/webhooks/appmax/'], appmaxWebhookHandler);
 
   // Health check
   app.get('/api/health', (req: express.Request, res: express.Response) => {

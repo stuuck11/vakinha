@@ -32,7 +32,7 @@ export interface PixUpConfig {
   apiKey: string;
 }
 
-export type PaymentGateway = 'stripe' | 'mercadopago' | 'asaas' | 'pixup' | 'stone' | 'braip' | 'pagbank' | 'simpay';
+export type PaymentGateway = 'stripe' | 'mercadopago' | 'asaas' | 'pixup' | 'stone' | 'braip' | 'pagbank' | 'simpay' | 'appmax';
 
 export interface StoneConfig {
   apiKey: string;
@@ -48,6 +48,10 @@ export interface PagBankConfig {
 }
 
 export interface SimPayConfig {
+  token: string;
+}
+
+export interface AppmaxConfig {
   token: string;
 }
 
@@ -83,6 +87,7 @@ export interface DonationConfig {
   braipConfig: BraipConfig;
   pagbankConfig: PagBankConfig;
   simpayConfig: SimPayConfig;
+  appmaxConfig: AppmaxConfig;
   metaPixelId?: string;
   metaAccessToken?: string;
 }

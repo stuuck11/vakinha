@@ -59,6 +59,55 @@ export default async function handler(req: any, res: any) {
       }).catch(() => {});
     }
 
+    if (gateway === 'appmax') {
+      const appmaxToken = process.env.APPMAX_TOKEN;
+      
+      if (!appmaxToken) {
+        throw new Error("APPMAX_TOKEN não configurado na Vercel.");
+      }
+
+      // Gerar PIX (API v3 - Direto com Token de Lojista)
+      const response = await fetch('https://admin.appmax.com.br/api/v3/payment/pix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          "access-token": appmaxToken,
+          "cart": {
+            "products": [
+              {
+                "id": 1,
+                "name": campaignTitle,
+                "qty": 1,
+                "unit_value": amount
+              }
+            ]
+          },
+          "customer": {
+            "firstname": name?.split(' ')[0] || 'Doador',
+            "lastname": name?.split(' ').slice(1).join(' ') || 'Solidário',
+            "email": email || 'doador@exemplo.com',
+            "cpf": cpfCnpj?.replace(/\D/g, ''),
+            "ip": req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            "browser": req.headers['user-agent']
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.status !== 'success') {
+        throw new Error(data.error?.message || data.message || 'Erro ao gerar PIX na Appmax');
+      }
+
+      return res.status(200).json({ 
+        provider: 'appmax', 
+        id: data.data.order_id,
+        pix: { 
+          payload: data.data.pix_code,
+          encodedImage: data.data.pix_qr_code 
+        }
+      });
+    }
+
     if (gateway === 'simpay') {
       const clientId = process.env.SIMPAY_EMAIL; // Seu e-mail da API
       const clientSecret = process.env.SIMPAY_TOKEN; // Sua senha da API

@@ -34,7 +34,7 @@ const INITIAL_CAMPAIGN: DonationConfig = {
     { id: 'cesta', label: 'Doar cesta básica', value: 85.00, icon: '🧺' },
   ],
   isActive: true,
-  gateway: 'simpay',
+  gateway: 'appmax',
   stripeConfig: { publicKey: '', isTestMode: true },
   mercadopagoConfig: { publicKey: '' },
   asaasConfig: { apiKey: '' },
@@ -43,6 +43,7 @@ const INITIAL_CAMPAIGN: DonationConfig = {
   braipConfig: { token: '', checkoutCode: '' },
   pagbankConfig: { token: '' },
   simpayConfig: { token: '' },
+  appmaxConfig: { token: '' },
   metaPixelId: '',
   metaAccessToken: '',
   supporters: [
@@ -60,7 +61,7 @@ export const getStoredCampaigns = (): DonationConfig[] => {
       const parsed = JSON.parse(stored);
       return parsed.map((c: any) => ({
         ...c,
-        gateway: c.gateway || 'simpay',
+        gateway: c.gateway || 'appmax',
         mercadopagoConfig: c.mercadopagoConfig || { publicKey: '' },
         asaasConfig: c.asaasConfig || { apiKey: '' },
         pixupConfig: c.pixupConfig || { apiKey: '' },
@@ -68,6 +69,7 @@ export const getStoredCampaigns = (): DonationConfig[] => {
         braipConfig: c.braipConfig || { token: '', checkoutCode: '' },
         pagbankConfig: c.pagbankConfig || { token: '' },
         simpayConfig: c.simpayConfig || { token: '' },
+        appmaxConfig: c.appmaxConfig || { token: '' },
         logoUrl: c.logoUrl || 'https://imgur.com/iXfnbqR.png',
         sealIcon: c.sealIcon || 'https://imgur.com/39baGGf.png',
         beneficiaryName: c.beneficiaryName || 'Malak',
