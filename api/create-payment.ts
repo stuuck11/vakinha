@@ -95,7 +95,8 @@ export default async function handler(req: any, res: any) {
 
       const data = await response.json();
       if (!response.ok || data.status !== 'success') {
-        throw new Error(data.error?.message || data.message || 'Erro ao gerar PIX na Appmax');
+        console.error("Appmax Error Detail:", JSON.stringify(data, null, 2));
+        throw new Error(`Erro ao gerar PIX na Appmax: ${data.error?.message || data.message || JSON.stringify(data)}`);
       }
 
       return res.status(200).json({ 
