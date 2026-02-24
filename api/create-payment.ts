@@ -60,19 +60,34 @@ export default async function handler(req: any, res: any) {
     }
 
     if (gateway === 'simpay') {
-      const simpayToken = process.env.SIMPAY_TOKEN; // Senha da API
-      const simpayEmail = process.env.SIMPAY_EMAIL; // Email da API
+      const clientId = process.env.SIMPAY_EMAIL; // Seu e-mail da API
+      const clientSecret = process.env.SIMPAY_TOKEN; // Sua senha da API
       
-      if (!simpayToken || !simpayEmail) {
-        throw new Error("SIMPAY_TOKEN ou SIMPAY_EMAIL não configurados no servidor.");
+      if (!clientId || !clientSecret) {
+        throw new Error("SIMPAY_EMAIL ou SIMPAY_TOKEN não configurados.");
       }
 
-      const response = await fetch('https://api.somossimpay.com.br/api/v1/gateway/pix-qrcode', {
+      // 1. Obter Token de Acesso (OAuth 2.0)
+      const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'accept': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
+      });
+
+      const authData = await authRes.json();
+      if (!authRes.ok || !authData.access_token) {
+        throw new Error(authData.message || "Erro ao autenticar na SimPay (OAuth)");
+      }
+
+      const accessToken = authData.access_token;
+
+      // 2. Gerar PIX (API v2)
+      const response = await fetch('https://api.somossimpay.com.br/v2/pix/payments/', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'app-email': simpayEmail,
-          'app-token': simpayToken
+          'Authorization': `Bearer ${accessToken}`,
+          'accept': 'application/json'
         },
         body: JSON.stringify({
           amount: amount,
@@ -92,7 +107,7 @@ export default async function handler(req: any, res: any) {
       try { data = JSON.parse(text); } catch(e) { throw new Error(`Resposta não-JSON da SimPay: ${text.substring(0, 100)}`); }
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || 'Erro na SimPay');
+        throw new Error(data.message || data.error || 'Erro ao gerar PIX na SimPay');
       }
 
       return res.status(200).json({ 

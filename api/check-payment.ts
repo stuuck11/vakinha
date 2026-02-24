@@ -35,21 +35,29 @@ export default async function handler(req: any, res: any) {
       }
     } 
     else if (gateway === 'simpay') {
-      const simpayToken = process.env.SIMPAY_TOKEN;
-      const simpayEmail = process.env.SIMPAY_EMAIL;
-      if (simpayToken && simpayEmail && paymentId) {
-        const response = await fetch(`https://api.somossimpay.com.br/api/v1/gateway/pix-status/${paymentId}`, {
-          headers: { 
-            'app-email': simpayEmail,
-            'app-token': simpayToken
-          }
+      const clientId = process.env.SIMPAY_EMAIL;
+      const clientSecret = process.env.SIMPAY_TOKEN;
+      
+      if (clientId && clientSecret && paymentId) {
+        // 1. Obter Token
+        const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
         });
-        if (response.ok) {
-          try {
-            const data = await response.json();
-            // Status PAID ou similar
-            isPaid = data.status === 'PAID' || data.status === 'paid' || data.paid === true || data.data?.status === 'PAID';
-          } catch(e) {}
+        const authData = await authRes.json();
+        
+        if (authRes.ok && authData.access_token) {
+          // 2. Consultar Status
+          const response = await fetch(`https://api.somossimpay.com.br/v2/pix/payments/${paymentId}/`, {
+            headers: { 'Authorization': `Bearer ${authData.access_token}` }
+          });
+          if (response.ok) {
+            try {
+              const data = await response.json();
+              isPaid = data.status === 'PAID' || data.status === 'paid' || data.paid === true;
+            } catch(e) {}
+          }
         }
       }
     }
