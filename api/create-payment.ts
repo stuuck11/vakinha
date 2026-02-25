@@ -71,7 +71,10 @@ export default async function handler(req: any, res: any) {
       }
 
       const appUrl = (process.env.APP_URL || '').trim().replace(/\/$/, '');
-      const response = await fetch('https://app.sigilopay.com.br/api/v1/payments', {
+      const transactionId = `don_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+      // Nova estrutura da SigiloPay: /gateway/pix/receive
+      const response = await fetch('https://app.sigilopay.com.br/api/v1/gateway/pix/receive', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -79,15 +82,14 @@ export default async function handler(req: any, res: any) {
           'x-secret-key': secretKey
         },
         body: JSON.stringify({
-          amount: Math.round(amount * 100), // Valor em centavos
-          description: `Doação: ${campaignTitle}`,
-          payment_method: 'pix',
-          customer: {
+          identifier: transactionId,
+          amount: Number(amount), // Agora é em Reais (float)
+          client: {
             name: (name || 'Doador').trim(),
             email: (email || 'doador@exemplo.com').trim(),
             document: cpfCnpj?.replace(/\D/g, '')
           },
-          postback_url: `${appUrl}/api/webhooks/sigilopay`
+          callbackurl: `${appUrl}/api/webhooks/sigilopay`
         })
       });
 
@@ -102,16 +104,16 @@ export default async function handler(req: any, res: any) {
       
       if (!response.ok) {
         console.error("SigiloPay Error Data:", JSON.stringify(data, null, 2));
-        throw new Error(`Erro SigiloPay: ${data.message || JSON.stringify(data)}`);
+        throw new Error(`Erro SigiloPay: ${data.message || data.error || JSON.stringify(data)}`);
       }
 
-      // SigiloPay retorna os dados do PIX em data.pix
+      // Nova estrutura de retorno: data.pix.code e data.pix.base64
       return res.status(200).json({ 
         provider: 'sigilopay', 
-        id: data.id,
+        id: data.transactionId || data.id,
         pix: { 
-          payload: data.pix?.payload || data.pix_code,
-          encodedImage: data.pix?.qrcode_base64 || data.pix_qr_code 
+          payload: data.pix?.code || data.pix_code,
+          encodedImage: data.pix?.base64 || data.pix_qr_code 
         }
       });
     }
