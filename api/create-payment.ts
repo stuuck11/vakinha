@@ -88,7 +88,7 @@ export default async function handler(req: any, res: any) {
             name: (name || 'Doador Anônimo').trim(),
             email: (email || 'doador@exemplo.com').trim(),
             phone: '11999999999', // Telefone padrão (obrigatório pela API)
-            document: cpfCnpj?.replace(/\D/g, '') || '00000000000' // CPF padrão se vazio
+            document: cpfCnpj?.replace(/\D/g, '') || '12345678909' // CPF tecnicamente válido (passa no algoritmo de validação)
           },
           products: [
             {
