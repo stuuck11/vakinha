@@ -94,7 +94,8 @@ export default async function handler(req: any, res: any) {
             document: cpfCnpj?.replace(/\D/g, '') || '12345678909' // CPF tecnicamente válido (passa no algoritmo de validação)
           },
           metadata: {
-            campaignId: campaignId,
+            campaignId: campaignId, // ID numérico (para o Pixel)
+            internalId: req.body.id, // ID interno do Firestore (camp-...)
             pixelId: pixelId,
             accessToken: accessToken,
             campaignTitle: campaignTitle,

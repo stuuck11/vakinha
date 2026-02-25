@@ -24,14 +24,14 @@ export default async function handler(req: any, res: any) {
 
     // SigiloPay webhook event for payment confirmed
     if (status === 'PAID' || status === 'COMPLETED' || status === 'OK' || payload.event === 'TRANSACTION_PAID') {
-      const campaignId = metadata.campaignId;
+      const internalId = metadata.internalId || metadata.campaignId;
       const pixelId = metadata.pixelId;
       const accessToken = metadata.accessToken;
       const donationAmount = Number(amount);
 
       // 1. Atualiza Firestore
-      if (campaignId && db) {
-        const campRef = doc(db, 'campaigns', campaignId);
+      if (internalId && db) {
+        const campRef = doc(db, 'campaigns', internalId);
         await updateDoc(campRef, {
           currentAmount: increment(donationAmount),
           supportersCount: increment(1)
