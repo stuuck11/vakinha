@@ -12,14 +12,22 @@ export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
   try {
-    const { id, status, amount, metadata, client } = req.body;
+    // A SigiloPay envia os dados principais dentro de 'transaction' e metadados em 'trackProps' ou 'metadata'
+    const payload = req.body;
+    const transaction = payload.transaction || {};
+    const metadata = payload.trackProps || payload.metadata || {};
+    const client = payload.client || {};
+    
+    const status = (transaction.status || payload.status || '').toString().toUpperCase();
+    const id = transaction.id || payload.id;
+    const amount = transaction.amount || payload.amount;
 
     // SigiloPay webhook event for payment confirmed
-    if (status === 'paid' || status === 'completed' || status === 'OK') {
-      const campaignId = metadata?.campaignId;
-      const pixelId = metadata?.pixelId;
-      const accessToken = metadata?.accessToken;
-      const donationAmount = Number(amount); // Na nova API já vem em Reais
+    if (status === 'PAID' || status === 'COMPLETED' || status === 'OK' || payload.event === 'TRANSACTION_PAID') {
+      const campaignId = metadata.campaignId;
+      const pixelId = metadata.pixelId;
+      const accessToken = metadata.accessToken;
+      const donationAmount = Number(amount);
 
       // 1. Atualiza Firestore
       if (campaignId && db) {
@@ -34,18 +42,18 @@ export default async function handler(req: any, res: any) {
       if (pixelId && accessToken) {
         const event = {
           event_name: 'Purchase',
-          event_id: id || metadata?.transactionId || `pay_${Date.now()}`,
+          event_id: id || metadata.transactionId || `pay_${Date.now()}`,
           event_time: Math.floor(Date.now() / 1000),
           action_source: 'website',
-          event_source_url: metadata?.originUrl || '',
+          event_source_url: metadata.originUrl || '',
           user_data: { 
-            em: metadata?.email ? [hash(metadata.email)] : (client?.email ? [hash(client.email)] : undefined),
-            ph: client?.phone ? [hash(client.phone)] : undefined
+            em: metadata.email ? [hash(metadata.email)] : (client.email ? [hash(client.email)] : undefined),
+            ph: client.phone ? [hash(client.phone)] : undefined
           },
           custom_data: { 
             currency: 'BRL', 
             value: donationAmount, 
-            content_name: metadata?.campaignTitle || 'Doação',
+            content_name: metadata.campaignTitle || 'Doação',
             content_type: 'product'
           }
         };
@@ -61,6 +69,6 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ received: true });
   } catch (err: any) {
     console.error("SigiloPay Webhook Error:", err);
-    return res.status(200).json({ received: true, error: err.message }); // Retorna 200 para evitar retentativas infinitas da SigiloPay em caso de erro lógico
+    return res.status(200).json({ received: true, error: err.message });
   }
 }
