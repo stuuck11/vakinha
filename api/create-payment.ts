@@ -60,11 +60,14 @@ export default async function handler(req: any, res: any) {
     }
 
     if (gateway === 'sigilopay') {
-      const publicKey = process.env.SIGILOPAY_PUBLIC_KEY;
-      const secretKey = process.env.SIGILOPAY_SECRET_KEY;
+      const publicKey = process.env.SIGILOPAY_PUBLIC_KEY?.trim();
+      const secretKey = process.env.SIGILOPAY_SECRET_KEY?.trim();
       
       if (!publicKey || !secretKey) {
-        throw new Error("SIGILOPAY_PUBLIC_KEY ou SIGILOPAY_SECRET_KEY não configurados.");
+        const missing = [];
+        if (!publicKey) missing.push('SIGILOPAY_PUBLIC_KEY');
+        if (!secretKey) missing.push('SIGILOPAY_SECRET_KEY');
+        throw new Error(`Configuração incompleta: ${missing.join(', ')} não encontrada(s) no ambiente.`);
       }
 
       const response = await fetch('https://app.sigilopay.com.br/api/v1/payments', {
@@ -83,7 +86,7 @@ export default async function handler(req: any, res: any) {
             email: email || 'doador@exemplo.com',
             document: cpfCnpj?.replace(/\D/g, '')
           },
-          postback_url: `${process.env.APP_URL}/api/webhooks/sigilopay`
+          postback_url: `${(process.env.APP_URL || '').trim()}/api/webhooks/sigilopay`
         })
       });
 

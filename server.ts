@@ -3,6 +3,10 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as dotenv from 'dotenv';
+
+// Carrega variáveis de ambiente do arquivo .env se existir
+dotenv.config();
 
 // Import handlers
 import createPaymentHandler from './api/create-payment';
@@ -51,6 +55,10 @@ async function startServer() {
 
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
+    console.log('Environment variables check:');
+    console.log('- SIGILOPAY_PUBLIC_KEY:', process.env.SIGILOPAY_PUBLIC_KEY ? 'Configurada' : 'Ausente');
+    console.log('- SIGILOPAY_SECRET_KEY:', process.env.SIGILOPAY_SECRET_KEY ? 'Configurada' : 'Ausente');
+    console.log('- APP_URL:', process.env.APP_URL ? 'Configurada' : 'Ausente');
   });
 }
 

@@ -21,8 +21,8 @@ export default async function handler(req: any, res: any) {
     let isPaid = false;
 
     if (gateway === 'sigilopay') {
-      const publicKey = process.env.SIGILOPAY_PUBLIC_KEY;
-      const secretKey = process.env.SIGILOPAY_SECRET_KEY;
+      const publicKey = process.env.SIGILOPAY_PUBLIC_KEY?.trim();
+      const secretKey = process.env.SIGILOPAY_SECRET_KEY?.trim();
       if (publicKey && secretKey && paymentId) {
         const response = await fetch(`https://app.sigilopay.com.br/api/v1/payments/${paymentId}`, {
           headers: { 
