@@ -38,11 +38,14 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // Serve static files in production
-    app.use(express.static(path.join(__dirname, 'dist')));
+    // Em produção, o servidor roda de dist-server/, então precisamos subir um nível para achar a pasta dist
+    const distPath = path.join(__dirname, '..', 'dist');
     
-    // Fallback para SPA - Captura qualquer rota que não seja arquivo estático ou API
+    app.use(express.static(distPath));
+    
+    // Fallback para SPA
     app.use((req: express.Request, res: express.Response) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
