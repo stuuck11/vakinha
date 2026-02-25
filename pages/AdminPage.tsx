@@ -84,7 +84,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
       id: `camp-${Date.now()}`,
       campaignId: Math.floor(100000 + Math.random() * 900000).toString(),
       mainImage: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1000',
-      logoUrl: 'https://imgur.com/RbZQZ66.png',
+      logoUrl: 'https://i.imgur.com/RbZQZ66.png',
       sealIcon: 'https://imgur.com/39baGGf.png',
       category: 'Saúde / Tratamentos',
       title: 'Nova Campanha',

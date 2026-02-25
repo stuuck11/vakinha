@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Admin); 
   const [config, setConfig] = useState<DonationConfig>(getInitialConfig());
   const [allCampaigns, setAllCampaigns] = useState<DonationConfig[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Listener em tempo real para o Firebase com tratamento de erro robusto
   useEffect(() => {
@@ -35,8 +36,16 @@ const App: React.FC = () => {
           const camps: DonationConfig[] = [];
           snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
             const data = doc.data() as any;
+            
+            // Migração/Correção de Logo: Se for a logo antiga ou estiver vazia, usa a nova padrão
+            let currentLogo = data.logoUrl;
+            if (!currentLogo || currentLogo === 'https://imgur.com/iXfnbqR.png') {
+              currentLogo = 'https://i.imgur.com/RbZQZ66.png';
+            }
+
             const campWithUpsells = { 
               ...data,
+              logoUrl: currentLogo,
               upsells: data.upsells && data.upsells.length > 0 ? data.upsells : [
                 { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
                 { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },
@@ -62,15 +71,18 @@ const App: React.FC = () => {
               if (current) setConfig(current);
             }
           }
+          setIsInitialLoading(false);
         },
         (error) => {
           console.error("Erro no Firestore (Database possivelmente não criada):", error);
           console.warn("Utilizando dados do LocalStorage como fallback.");
+          setIsInitialLoading(false);
         }
       );
       return () => unsub();
     } catch (e) {
       console.error("Falha ao iniciar listener do Firestore:", e);
+      setIsInitialLoading(false);
     }
   }, []);
 
@@ -164,6 +176,14 @@ const App: React.FC = () => {
     setConfig(selectedConfig);
     pushRoute(`/c/${selectedConfig.campaignId}`);
   };
+
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-[#24CA68] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFDFD]">
