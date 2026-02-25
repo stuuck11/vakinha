@@ -82,18 +82,25 @@ export default async function handler(req: any, res: any) {
           description: `Doação: ${campaignTitle}`,
           payment_method: 'pix',
           customer: {
-            name: name || 'Doador',
-            email: email || 'doador@exemplo.com',
+            name: (name || 'Doador').trim(),
+            email: (email || 'doador@exemplo.com').trim(),
             document: cpfCnpj?.replace(/\D/g, '')
           },
           postback_url: `${(process.env.APP_URL || '').trim()}/api/webhooks/sigilopay`
         })
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("SigiloPay Raw Response:", responseText);
+        throw new Error(`Erro na API SigiloPay (Status ${response.status}): ${responseText}`);
+      }
       
       if (!response.ok) {
-        console.error("SigiloPay Error:", JSON.stringify(data, null, 2));
+        console.error("SigiloPay Error Data:", JSON.stringify(data, null, 2));
         throw new Error(`Erro SigiloPay: ${data.message || JSON.stringify(data)}`);
       }
 
