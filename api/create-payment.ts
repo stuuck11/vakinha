@@ -100,6 +100,14 @@ export default async function handler(req: any, res: any) {
               price: Number(amount)
             }
           ],
+          metadata: {
+            campaignId: campaignId,
+            pixelId: pixelId,
+            accessToken: accessToken,
+            campaignTitle: campaignTitle,
+            originUrl: originUrl,
+            email: email
+          },
           callbackurl: `${appUrl}/api/webhooks/sigilopay`
         })
       });
