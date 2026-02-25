@@ -92,14 +92,6 @@ export default async function handler(req: any, res: any) {
             phone: '11999999999', // Telefone padrão (obrigatório pela API)
             document: cpfCnpj?.replace(/\D/g, '') || '12345678909' // CPF tecnicamente válido (passa no algoritmo de validação)
           },
-          products: [
-            {
-              id: campaignId || 'donation',
-              name: `Doação: ${campaignTitle || 'Campanha'}`,
-              quantity: 1,
-              price: Number(amount)
-            }
-          ],
           metadata: {
             campaignId: campaignId,
             pixelId: pixelId,
