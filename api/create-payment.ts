@@ -70,6 +70,7 @@ export default async function handler(req: any, res: any) {
         throw new Error(`Configuração incompleta: ${missing.join(', ')} não encontrada(s) no ambiente.`);
       }
 
+      const appUrl = (process.env.APP_URL || '').trim().replace(/\/$/, '');
       const response = await fetch('https://app.sigilopay.com.br/api/v1/payments', {
         method: 'POST',
         headers: { 
@@ -86,7 +87,7 @@ export default async function handler(req: any, res: any) {
             email: (email || 'doador@exemplo.com').trim(),
             document: cpfCnpj?.replace(/\D/g, '')
           },
-          postback_url: `${(process.env.APP_URL || '').trim()}/api/webhooks/sigilopay`
+          postback_url: `${appUrl}/api/webhooks/sigilopay`
         })
       });
 
