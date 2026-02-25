@@ -1,6 +1,6 @@
 
 import { db } from '../../firebase';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, collection, query, where, getDocs } from 'firebase/firestore';
 import crypto from 'crypto';
 
 function hash(val: string | undefined): string | undefined {
@@ -32,10 +32,28 @@ export default async function handler(req: any, res: any) {
       // 1. Atualiza Firestore
       if (internalId && db) {
         const campRef = doc(db, 'campaigns', internalId);
-        await updateDoc(campRef, {
-          currentAmount: increment(donationAmount),
-          supportersCount: increment(1)
-        }).catch(err => console.error("Erro ao atualizar Firestore no Webhook:", err));
+        try {
+          await updateDoc(campRef, {
+            currentAmount: increment(donationAmount),
+            supportersCount: increment(1)
+          });
+        } catch (err: any) {
+          // Se não encontrar pelo ID do documento, tenta buscar pelo campo 'campaignId'
+          if (err.code === 'not-found') {
+            const q = query(collection(db, 'campaigns'), where('campaignId', '==', internalId.toString()));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              await updateDoc(querySnapshot.docs[0].ref, {
+                currentAmount: increment(donationAmount),
+                supportersCount: increment(1)
+              });
+            } else {
+              console.error(`Campanha ${internalId} não encontrada no Firestore.`);
+            }
+          } else {
+            console.error("Erro ao atualizar Firestore no Webhook:", err);
+          }
+        }
       }
 
       // 2. Envia para o Meta Pixel (CAPI)
