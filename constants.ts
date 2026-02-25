@@ -10,40 +10,31 @@ export const COLORS = {
 
 const INITIAL_CAMPAIGN: DonationConfig = {
   id: 'default-1',
-  campaignId: '5193165',
-  mainImage: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1000',
+  campaignId: '000000',
+  mainImage: 'https://i.imgur.com/RbZQZ66.png',
   logoUrl: 'https://i.imgur.com/RbZQZ66.png',
   sealIcon: 'https://imgur.com/39baGGf.png',
-  category: 'Saúde / Tratamentos',
-  title: 'Salve o Malak',
-  subtitle: 'O Malak precisa de uma cirurgia urgente.',
-  description: 'O Mallak — nosso lindo furacão em forma de Golden Retriever — está enfrentando a batalha mais difícil de sua vida. Ele foi diagnosticado com uma grave doença neurológica, um tumor cerebral, e agora precisa urgentemente de tratamento especializado, com possibilidade de cirurgia e/ou radioterapia. Os custos são extremamente altos e aumentam a cada dia. Estamos fazendo tudo o que está ao nosso alcance, mas infelizmente não conseguimos seguir sozinhos...',
-  targetAmount: 25784.90,
-  currentAmount: 17422.74,
-  heartsCount: 471,
-  supportersCount: 368,
-  creatorName: 'Admin',
-  creatorSince: 'novembro/2024',
-  beneficiaryName: 'Malak',
-  topicTitle: 'Ajude o Malak a lutar pela vida 🐾 💛',
-  presetAmounts: [30, 50, 75, 100, 200, 500, 750, 1000],
+  category: 'Doação',
+  title: 'Carregando campanha...',
+  subtitle: 'Por favor, aguarde um momento.',
+  description: 'Carregando informações da campanha...',
+  targetAmount: 1,
+  currentAmount: 0,
+  heartsCount: 0,
+  supportersCount: 0,
+  creatorName: 'Organizador',
+  creatorSince: '',
+  beneficiaryName: 'Beneficiário',
+  topicTitle: 'Sobre a campanha',
+  presetAmounts: [30, 50, 100],
   minAmount: 5,
-  upsells: [
-    { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
-    { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },
-    { id: 'cesta', label: 'Doar cesta básica', value: 85.00, icon: '🧺' },
-  ],
+  upsells: [],
   isActive: true,
   gateway: 'sigilopay',
   sigiloPayConfig: { publicKey: '', secretKey: '' },
   metaPixelId: '',
   metaAccessToken: '',
-  supporters: [
-    { id: '1', name: 'Maria S.', amount: 100, comment: 'Força Malak! 💚', time: 'há 2 horas', avatarColor: '#E6FFFA' },
-    { id: '2', name: 'João P.', amount: 50, comment: 'Estamos com você!', time: 'há 5 horas', avatarColor: '#F0FFF4' },
-    { id: '3', name: 'Ana C.', amount: 200, comment: 'Melhoras pro pequeno 🐕❤️', time: 'há 1 dia', avatarColor: '#EBF8FF' },
-    { id: '4', name: 'Carlos M.', amount: 30, comment: '', time: 'há 1 dia', avatarColor: '#F0FFF4' }
-  ]
+  supporters: []
 };
 
 export const getStoredCampaigns = (): DonationConfig[] => {

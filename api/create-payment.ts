@@ -86,6 +86,7 @@ export default async function handler(req: any, res: any) {
         body: JSON.stringify({
           identifier: transactionId,
           amount: Number(amount), // Agora é em Reais (float)
+          description: `Doação: ${campaignTitle || 'Campanha'}`,
           client: {
             name: (name || 'Doador Anônimo').trim(),
             email: (email || 'doador@exemplo.com').trim(),
