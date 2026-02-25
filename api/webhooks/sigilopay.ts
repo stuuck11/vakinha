@@ -1,6 +1,6 @@
 
 import { db } from '../../firebase';
-import { doc, updateDoc, increment, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, increment, collection, query, where, getDocs, getDoc } from 'firebase/firestore';
 import crypto from 'crypto';
 
 function hash(val: string | undefined): string | undefined {
@@ -31,28 +31,34 @@ export default async function handler(req: any, res: any) {
 
       // 1. Atualiza Firestore
       if (internalId && db) {
-        const campRef = doc(db, 'campaigns', internalId);
+        let campRef = doc(db, 'campaigns', internalId.toString());
+        let found = false;
+
         try {
-          await updateDoc(campRef, {
-            currentAmount: increment(donationAmount),
-            supportersCount: increment(1)
-          });
-        } catch (err: any) {
-          // Se não encontrar pelo ID do documento, tenta buscar pelo campo 'campaignId'
-          if (err.code === 'not-found') {
+          const snap = await getDoc(campRef);
+          if (snap.exists()) {
+            found = true;
+          } else {
+            // Fallback: Busca pelo campo 'campaignId'
             const q = query(collection(db, 'campaigns'), where('campaignId', '==', internalId.toString()));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
-              await updateDoc(querySnapshot.docs[0].ref, {
-                currentAmount: increment(donationAmount),
-                supportersCount: increment(1)
-              });
-            } else {
-              console.error(`Campanha ${internalId} não encontrada no Firestore.`);
+              campRef = querySnapshot.docs[0].ref;
+              found = true;
             }
-          } else {
-            console.error("Erro ao atualizar Firestore no Webhook:", err);
           }
+
+          if (found) {
+            await updateDoc(campRef, {
+              currentAmount: increment(donationAmount),
+              supportersCount: increment(1)
+            });
+            console.log(`Webhook: Campanha ${internalId} atualizada com sucesso.`);
+          } else {
+            console.error(`Webhook: Campanha ${internalId} não encontrada no Firestore.`);
+          }
+        } catch (err: any) {
+          console.error("Erro ao processar Firestore no Webhook:", err);
         }
       }
 
