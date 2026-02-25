@@ -59,7 +59,9 @@ export default async function handler(req: any, res: any) {
       }).catch(() => {});
     }
 
-    if (gateway === 'sigilopay') {
+    const activeGateway = (gateway || 'sigilopay').toString().toLowerCase().trim();
+
+    if (activeGateway === 'sigilopay') {
       const publicKey = process.env.SIGILOPAY_PUBLIC_KEY?.trim();
       const secretKey = process.env.SIGILOPAY_SECRET_KEY?.trim();
       
@@ -127,7 +129,7 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    return res.status(400).json({ error: 'Gateway não suportado' });
+    return res.status(400).json({ error: `Gateway '${gateway}' não suportado` });
 
   } catch (err: any) {
     console.error("Payment API Error:", err);

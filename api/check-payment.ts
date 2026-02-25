@@ -20,7 +20,9 @@ export default async function handler(req: any, res: any) {
 
     let isPaid = false;
 
-    if (gateway === 'sigilopay') {
+    const activeGateway = (gateway || 'sigilopay').toString().toLowerCase().trim();
+
+    if (activeGateway === 'sigilopay') {
       const publicKey = process.env.SIGILOPAY_PUBLIC_KEY?.trim();
       const secretKey = process.env.SIGILOPAY_SECRET_KEY?.trim();
       if (publicKey && secretKey && paymentId) {
