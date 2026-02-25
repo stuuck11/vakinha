@@ -85,10 +85,10 @@ export default async function handler(req: any, res: any) {
           identifier: transactionId,
           amount: Number(amount), // Agora é em Reais (float)
           client: {
-            name: (name || 'Doador').trim(),
+            name: (name || 'Doador Anônimo').trim(),
             email: (email || 'doador@exemplo.com').trim(),
             phone: '11999999999', // Telefone padrão (obrigatório pela API)
-            document: cpfCnpj?.replace(/\D/g, '')
+            document: cpfCnpj?.replace(/\D/g, '') || '00000000000' // CPF padrão se vazio
           },
           products: [
             {
