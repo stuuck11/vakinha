@@ -39,7 +39,9 @@ async function startServer() {
   } else {
     // Serve static files in production
     app.use(express.static(path.join(__dirname, 'dist')));
-    app.get('(.*)', (req: express.Request, res: express.Response) => {
+    
+    // Fallback para SPA - Captura qualquer rota que não seja arquivo estático ou API
+    app.use((req: express.Request, res: express.Response) => {
       res.sendFile(path.join(__dirname, 'dist', 'index.html'));
     });
   }
