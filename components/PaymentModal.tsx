@@ -47,28 +47,29 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         } else if (response.provider === 'abacatepay' && response.url) {
           window.location.href = response.url;
           return;
+        } else {
+          let id = response.id;
+          let qr = '';
+          let cp = '';
+
+          if (response.provider === 'asaas' && response.pix) {
+            qr = `data:image/png;base64,${response.pix.encodedImage}`;
+            cp = response.pix.payload;
+          } else if (response.next_action?.pix_display_qr_code) {
+            qr = response.next_action.pix_display_qr_code.image_url_svg;
+            cp = response.next_action.pix_display_qr_code.data;
+          } else if (response.point_of_interaction?.transaction_data) {
+            qr = `data:image/png;base64,${response.point_of_interaction.transaction_data.qr_code_base64}`;
+            cp = response.point_of_interaction.transaction_data.qr_code;
+          }
+
+          setPixData({ id, qrCode: qr, copyPaste: cp });
         }
-
-        let id = response.id;
-        let qr = '';
-        let cp = '';
-
-        if (response.provider === 'asaas' && response.pix) {
-          qr = `data:image/png;base64,${response.pix.encodedImage}`;
-          cp = response.pix.payload;
-        } else if (response.next_action?.pix_display_qr_code) {
-          qr = response.next_action.pix_display_qr_code.image_url_svg;
-          cp = response.next_action.pix_display_qr_code.data;
-        } else if (response.point_of_interaction?.transaction_data) {
-          qr = `data:image/png;base64,${response.point_of_interaction.transaction_data.qr_code_base64}`;
-          cp = response.point_of_interaction.transaction_data.qr_code;
-        }
-
-        setPixData({ id, qrCode: qr, copyPaste: cp });
         
-        if (id) {
+        const finalId = response.id;
+        if (finalId) {
           pollingRef.current = setInterval(async () => {
-            const status = await paymentService.checkPaymentStatus(id, config.gateway, config, total, donorData.email);
+            const status = await paymentService.checkPaymentStatus(finalId, config.gateway, config, total, donorData.email);
             if (status.paid) {
               setIsPaid(true);
               clearInterval(pollingRef.current);
