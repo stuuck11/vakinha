@@ -16,7 +16,6 @@ export const paymentService = {
         pixelId: campaign.metaPixelId,
         accessToken: campaign.metaAccessToken,
         campaignId: campaign.campaignId,
-        braipCheckoutCode: campaign.braipConfig?.checkoutCode,
         id: campaign.id, // Envia o ID interno (camp-...) para o externalReference do Asaas
         originUrl: window.location.href
       })

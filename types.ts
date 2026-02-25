@@ -15,45 +15,12 @@ export interface UpsellOption {
   icon: string;
 }
 
-export interface StripeConfig {
+export interface SigiloPayConfig {
   publicKey: string;
-  isTestMode: boolean;
+  secretKey: string;
 }
 
-export interface MercadoPagoConfig {
-  publicKey: string;
-}
-
-export interface AsaasConfig {
-  apiKey: string;
-}
-
-export interface PixUpConfig {
-  apiKey: string;
-}
-
-export type PaymentGateway = 'stripe' | 'mercadopago' | 'asaas' | 'pixup' | 'stone' | 'braip' | 'pagbank' | 'simpay' | 'appmax';
-
-export interface StoneConfig {
-  apiKey: string;
-}
-
-export interface BraipConfig {
-  token: string;
-  checkoutCode: string;
-}
-
-export interface PagBankConfig {
-  token: string;
-}
-
-export interface SimPayConfig {
-  token: string;
-}
-
-export interface AppmaxConfig {
-  token: string;
-}
+export type PaymentGateway = 'sigilopay';
 
 export interface DonationConfig {
   id: string;
@@ -79,15 +46,7 @@ export interface DonationConfig {
   isActive: boolean;
   supporters: Supporter[];
   gateway: PaymentGateway;
-  stripeConfig: StripeConfig;
-  mercadopagoConfig: MercadoPagoConfig;
-  asaasConfig: AsaasConfig;
-  pixupConfig: PixUpConfig;
-  stoneConfig: StoneConfig;
-  braipConfig: BraipConfig;
-  pagbankConfig: PagBankConfig;
-  simpayConfig: SimPayConfig;
-  appmaxConfig: AppmaxConfig;
+  sigiloPayConfig: SigiloPayConfig;
   metaPixelId?: string;
   metaAccessToken?: string;
 }

@@ -38,6 +38,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
         const response = await paymentService.createPixPayment(total, donorData, config);
         if (!isMounted) return;
 
+        if (response.provider === 'sigilopay' && response.pix) {
+          setPixData({ 
+            id: response.id, 
+            qrCode: response.pix.encodedImage.startsWith('data:') ? response.pix.encodedImage : `data:image/png;base64,${response.pix.encodedImage}`, 
+            copyPaste: response.pix.payload 
+          });
+        } else if (response.provider === 'abacatepay' && response.url) {
+          window.location.href = response.url;
+          return;
+        }
+
         let id = response.id;
         let qr = '';
         let cp = '';

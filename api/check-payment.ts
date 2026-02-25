@@ -20,145 +20,23 @@ export default async function handler(req: any, res: any) {
 
     let isPaid = false;
 
-    if (gateway === 'asaas') {
-      const asaasApiKey = process.env.ASAAS_API_KEY;
-      if (asaasApiKey && paymentId) {
-        const response = await fetch(`https://api.asaas.com/v3/payments/${paymentId}`, {
-          headers: { 'access_token': asaasApiKey }
-        });
-        if (response.ok) {
-          try {
-            const data = await response.json();
-            isPaid = data.status === 'RECEIVED' || data.status === 'CONFIRMED';
-          } catch(e) {}
-        }
-      }
-    } 
-    else if (gateway === 'appmax') {
-      const appmaxToken = process.env.APPMAX_TOKEN;
-      if (appmaxToken && paymentId) {
-        const response = await fetch(`https://admin.appmax.com.br/api/v3/order/status?access-token=${appmaxToken}&order_id=${paymentId}`);
-        if (response.ok) {
-          try {
-            const data = await response.json();
-            isPaid = data.data?.status === 'pago';
-          } catch(e) {}
-        }
-      }
-    }
-    else if (gateway === 'simpay') {
-      const clientId = process.env.SIMPAY_EMAIL;
-      const clientSecret = process.env.SIMPAY_TOKEN;
-      
-      if (clientId && clientSecret && paymentId) {
-        // 1. Obter Token
-        const authRes = await fetch('https://api.somossimpay.com.br/v2/finance/auth-token/', {
-          method: 'POST',
+    if (gateway === 'sigilopay') {
+      const publicKey = process.env.SIGILOPAY_PUBLIC_KEY;
+      const secretKey = process.env.SIGILOPAY_SECRET_KEY;
+      if (publicKey && secretKey && paymentId) {
+        const response = await fetch(`https://app.sigilopay.com.br/api/v1/payments/${paymentId}`, {
           headers: { 
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          },
-          body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
-        });
-        const authData = await authRes.json();
-        
-        if (authRes.ok && authData.access_token) {
-          // 2. Consultar Status
-          const response = await fetch(`https://api.somossimpay.com.br/v2/pix/payments/${paymentId}/`, {
-            headers: { 
-              'Authorization': `Bearer ${authData.access_token}`,
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
-          });
-          if (response.ok) {
-            try {
-              const data = await response.json();
-              isPaid = data.status === 'PAID' || data.status === 'paid' || data.paid === true;
-            } catch(e) {}
+            'x-public-key': publicKey,
+            'x-secret-key': secretKey
           }
-        }
-      }
-    }
-    else if (gateway === 'pagbank') {
-      const pagbankToken = process.env.PAGBANK_TOKEN;
-      if (pagbankToken && paymentId) {
-        const response = await fetch(`https://api.pagseguro.com/orders/${paymentId}`, {
-          headers: { 'Authorization': `Bearer ${pagbankToken}` }
         });
         if (response.ok) {
           try {
             const data = await response.json();
-            // Status PAID ou PAID_OUT
-            isPaid = data.status === 'PAID' || data.status === 'PAID_OUT';
+            isPaid = data.status === 'paid' || data.status === 'completed';
           } catch(e) {}
         }
       }
-    }
-    else if (gateway === 'braip') {
-      const braipToken = process.env.BRAIP_TOKEN;
-      if (braipToken && paymentId) {
-        const response = await fetch(`https://ev.braip.com/api/v1/transactions/${paymentId}?token=${braipToken}`);
-        if (response.ok) {
-          try {
-            const data = await response.json();
-            // Status 2 = Pago na Braip
-            isPaid = data.status === 2 || data.data?.status === 2;
-          } catch(e) {}
-        }
-      }
-    }
-    else if (gateway === 'stone') {
-      const stoneApiKey = process.env.STONE_API_KEY;
-      if (stoneApiKey && paymentId) {
-        const auth = Buffer.from(`${stoneApiKey}:`).toString('base64');
-        const response = await fetch(`https://api.pagar.me/core/v5/orders/${paymentId}`, {
-          headers: { 'Authorization': `Basic ${auth}` }
-        });
-        if (response.ok) {
-          try {
-            const data = await response.json();
-            isPaid = data.status === 'paid';
-          } catch(e) {}
-        }
-      }
-    }
-    else if (gateway === 'mercadopago') {
-      const mpToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-      if (mpToken && paymentId) {
-        const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-          headers: { 'Authorization': `Bearer ${mpToken}` }
-        });
-        if (response.ok) {
-          try {
-            const data = await response.json();
-            isPaid = data.status === 'approved';
-          } catch(e) {}
-        }
-      }
-    }
-    else if (gateway === 'stripe') {
-      const stripeKey = process.env.STRIPE_SECRET_KEY;
-      if (stripeKey && paymentId) {
-        const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' as any });
-        const intent = await stripe.paymentIntents.retrieve(paymentId);
-        isPaid = intent.status === 'succeeded';
-      }
-    }
-    else if (gateway === 'pixup') {
-       const pixupApiKey = process.env.PIXUP_API_KEY;
-       if (pixupApiKey && paymentId) {
-         const response = await fetch(`https://api.pixup.com/v1/payments/${paymentId}`, {
-           headers: { 'Authorization': `Bearer ${pixupApiKey}` }
-         });
-         if (response.ok) {
-           const text = await response.text();
-           try {
-             const data = JSON.parse(text);
-             const status = (data.status || data.data?.status || '').toUpperCase();
-             isPaid = ['PAID', 'SETTLED', 'RECEIVED', 'APPROVED', 'CONFIRMED'].includes(status);
-           } catch(e) {}
-         }
-       }
     }
 
     if (isPaid && pixelId && accessToken) {

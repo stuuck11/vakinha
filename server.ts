@@ -7,19 +7,14 @@ import { fileURLToPath } from 'url';
 // Import handlers
 import createPaymentHandler from './api/create-payment';
 import checkPaymentHandler from './api/check-payment';
-import asaasWebhookHandler from './api/webhooks/asaas';
-import stoneWebhookHandler from './api/webhooks/stone';
-import braipWebhookHandler from './api/webhooks/braip';
-import pagbankWebhookHandler from './api/webhooks/pagbank';
-import simpayWebhookHandler from './api/webhooks/simpay';
-import appmaxWebhookHandler from './api/webhooks/appmax';
+import sigilopayWebhookHandler from './api/webhooks/sigilopay';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   // Middleware for JSON bodies
   app.use(express.json());
@@ -27,12 +22,7 @@ async function startServer() {
   // API Routes
   app.post(['/api/create-payment', '/api/create-payment/'], createPaymentHandler);
   app.post(['/api/check-payment', '/api/check-payment/'], checkPaymentHandler);
-  app.post(['/api/webhooks/asaas', '/api/webhooks/asaas/'], asaasWebhookHandler);
-  app.post(['/api/webhooks/stone', '/api/webhooks/stone/'], stoneWebhookHandler);
-  app.post(['/api/webhooks/braip', '/api/webhooks/braip/'], braipWebhookHandler);
-  app.post(['/api/webhooks/pagbank', '/api/webhooks/pagbank/'], pagbankWebhookHandler);
-  app.post(['/api/webhooks/simpay', '/api/webhooks/simpay/'], simpayWebhookHandler);
-  app.post(['/api/webhooks/appmax', '/api/webhooks/appmax/'], appmaxWebhookHandler);
+  app.post(['/api/webhooks/sigilopay', '/api/webhooks/sigilopay/'], sigilopayWebhookHandler);
 
   // Health check
   app.get('/api/health', (req: express.Request, res: express.Response) => {
@@ -54,7 +44,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
