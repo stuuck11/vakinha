@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "main": "index.html",
+  "main": "server.js",
   "scripts": {
     "dev": "tsx server.ts",
     "build": "tsc && vite build",
