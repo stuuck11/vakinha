@@ -87,8 +87,17 @@ export default async function handler(req: any, res: any) {
           client: {
             name: (name || 'Doador').trim(),
             email: (email || 'doador@exemplo.com').trim(),
+            phone: '11999999999', // Telefone padrão (obrigatório pela API)
             document: cpfCnpj?.replace(/\D/g, '')
           },
+          products: [
+            {
+              id: campaignId || 'donation',
+              name: `Doação: ${campaignTitle || 'Campanha'}`,
+              quantity: 1,
+              price: Number(amount)
+            }
+          ],
           callbackurl: `${appUrl}/api/webhooks/sigilopay`
         })
       });
