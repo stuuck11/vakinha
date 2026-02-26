@@ -15,7 +15,8 @@ export default async function handler(req: any, res: any) {
   try {
     const { amount, name, email, cpfCnpj, campaignTitle, gateway, pixelId, accessToken, campaignId, originUrl } = req.body;
     const userAgent = req.headers['user-agent'] || '';
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+    const ip = Array.isArray(rawIp) ? rawIp[0] : rawIp.split(',')[0].trim();
     
     // Captura tracking cookies para CAPI
     const cookies = req.headers.cookie || '';
@@ -33,8 +34,10 @@ export default async function handler(req: any, res: any) {
           action_source: 'website',
           event_source_url: originUrl,
           user_data: { 
+            client_ip_address: ip,
             client_user_agent: userAgent, 
             em: hashedEmail ? [hashedEmail] : undefined,
+            external_id: [hash(req.body.id || campaignId)],
             fbp, fbc 
           },
           custom_data: { currency: 'BRL', value: Number(amount), content_name: campaignTitle }
@@ -46,17 +49,23 @@ export default async function handler(req: any, res: any) {
           action_source: 'website',
           event_source_url: originUrl,
           user_data: { 
+            client_ip_address: ip,
             client_user_agent: userAgent, 
             em: hashedEmail ? [hashedEmail] : undefined,
+            external_id: [hash(req.body.id || campaignId)],
             fbp, fbc 
           },
           custom_data: { currency: 'BRL', value: Number(amount), content_name: campaignTitle }
         }
       ];
+      const testCode = process.env.FB_TEST_CODE;
       fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: events })
+        body: JSON.stringify({ 
+          data: events,
+          ...(testCode ? { test_event_code: testCode } : {})
+        })
       }).catch(() => {});
     }
 

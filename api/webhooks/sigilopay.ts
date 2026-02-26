@@ -69,6 +69,9 @@ export default async function handler(req: any, res: any) {
 
       // 2. Envia para o Meta Pixel (CAPI)
       if (pixelId && accessToken) {
+        const rawIp = metadata.ip || '';
+        const cleanIp = Array.isArray(rawIp) ? rawIp[0] : rawIp.split(',')[0].trim();
+
         const event = {
           event_name: 'Purchase',
           event_id: id || metadata.transactionId || `pay_${Date.now()}`,
@@ -78,8 +81,9 @@ export default async function handler(req: any, res: any) {
           user_data: { 
             em: metadata.email ? [hash(metadata.email)] : (client.email ? [hash(client.email)] : undefined),
             ph: client.phone ? [hash(client.phone)] : undefined,
-            client_ip_address: metadata.ip,
+            client_ip_address: cleanIp,
             client_user_agent: metadata.userAgent,
+            external_id: [hash(metadata.internalId || metadata.campaignId)],
             fbp: metadata.fbp,
             fbc: metadata.fbc
           },
@@ -96,7 +100,10 @@ export default async function handler(req: any, res: any) {
         const fbResponse = await fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: [event] })
+          body: JSON.stringify({ 
+            data: [event],
+            ...(process.env.FB_TEST_CODE ? { test_event_code: process.env.FB_TEST_CODE } : {})
+          })
         });
         
         const fbData = await fbResponse.json();
