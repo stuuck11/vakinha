@@ -14,6 +14,8 @@ export default async function handler(req: any, res: any) {
   try {
     // A SigiloPay envia os dados principais dentro de 'transaction' e metadados em 'trackProps' ou 'metadata'
     const payload = req.body;
+    console.error("DEBUG: Webhook Payload Recebido:", JSON.stringify(payload, null, 2));
+
     const transaction = payload.transaction || {};
     const metadata = payload.trackProps || payload.metadata || {};
     const client = payload.client || {};
@@ -22,12 +24,16 @@ export default async function handler(req: any, res: any) {
     const id = transaction.id || payload.id;
     const amount = transaction.amount || payload.amount;
 
+    console.error(`DEBUG: Status Identificado: ${status}, Evento: ${payload.event}, ID: ${id}`);
+
     // SigiloPay webhook event for payment confirmed
     if (status === 'PAID' || status === 'COMPLETED' || status === 'OK' || payload.event === 'TRANSACTION_PAID') {
       const internalId = metadata.internalId || metadata.campaignId;
       const pixelId = metadata.pixelId;
       const accessToken = metadata.accessToken;
       const donationAmount = Number(amount);
+
+      console.error(`DEBUG: Processando Pagamento Confirmado. Pixel: ${pixelId}, Campaign: ${internalId}`);
 
       // 1. Atualiza Firestore
       if (internalId && db) {
@@ -82,12 +88,21 @@ export default async function handler(req: any, res: any) {
           }
         };
 
-        await fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
+        console.error("DEBUG: Enviando para Facebook CAPI:", JSON.stringify(event, null, 2));
+
+        const fbResponse = await fetch(`https://graph.facebook.com/v17.0/${pixelId}/events?access_token=${accessToken}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: [event] })
-        }).catch(err => console.error("Erro CAPI no Webhook:", err));
+        });
+        
+        const fbData = await fbResponse.json();
+        console.error("DEBUG: Resposta do Facebook CAPI:", JSON.stringify(fbData, null, 2));
+      } else {
+        console.error("DEBUG: Falha ao enviar CAPI - PixelID ou AccessToken ausentes nos metadados.");
       }
+    } else {
+      console.error(`DEBUG: Webhook ignorado - Status '${status}' não é de pagamento confirmado.`);
     }
 
     return res.status(200).json({ received: true });

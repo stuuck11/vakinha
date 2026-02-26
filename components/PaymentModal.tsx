@@ -81,7 +81,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ total, donorData, ca
                   currency: 'BRL',
                   content_name: campaignTitle,
                   content_type: 'product'
-                }, { eventID: id });
+                }, { eventID: finalId });
                 (window as any).purchaseTracked = true;
               }
             }

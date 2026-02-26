@@ -27,11 +27,24 @@ const App: React.FC = () => {
   const [allCampaigns, setAllCampaigns] = useState<DonationConfig[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
+  // Timeout de segurança para evitar tela branca infinita se o Firestore demorar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 4000); // 4 segundos de limite para o carregamento inicial
+    return () => clearTimeout(timer);
+  }, []);
+
   // Listener em tempo real para o Firebase com tratamento de erro robusto
   useEffect(() => {
     try {
+      if (!db) {
+        setIsInitialLoading(false);
+        return;
+      }
+
       const unsub = onSnapshot(
-        collection(db, 'campaigns'), 
+        collection(db, 'campaigns'),
         (snapshot: QuerySnapshot<DocumentData>) => {
           const camps: DonationConfig[] = [];
           snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
