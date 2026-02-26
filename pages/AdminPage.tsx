@@ -123,12 +123,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
 
   const handleSaveForm = async () => {
     if (!formData) return;
+    const finalData = { ...formData, minAmount: 5 };
     let updated;
-    const exists = campaigns.find(c => c.id === formData.id);
+    const exists = campaigns.find(c => c.id === finalData.id);
     if (exists) {
-      updated = campaigns.map(c => c.id === formData.id ? formData : c);
+      updated = campaigns.map(c => c.id === finalData.id ? finalData : c);
     } else {
-      updated = [...campaigns, formData];
+      updated = [...campaigns, finalData];
     }
     
     setCampaigns(updated);
@@ -136,7 +137,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onUpdate, onBack, onViewCa
 
     if (db && (isCloudSyncing || !exists)) {
       try {
-        await setDoc(doc(db, 'campaigns', formData.id), formData);
+        await setDoc(doc(db, 'campaigns', finalData.id), finalData);
       } catch (e) {
         console.warn("Salvando apenas localmente.");
       }

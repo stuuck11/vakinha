@@ -59,6 +59,7 @@ const App: React.FC = () => {
             const campWithUpsells = { 
               ...data,
               logoUrl: currentLogo,
+              minAmount: 5, // Força o mínimo de 5 reais conforme solicitado
               upsells: data.upsells && data.upsells.length > 0 ? data.upsells : [
                 { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
                 { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },

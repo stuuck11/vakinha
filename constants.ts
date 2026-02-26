@@ -44,6 +44,7 @@ export const getStoredCampaigns = (): DonationConfig[] => {
       const parsed = JSON.parse(stored);
       return parsed.map((c: any) => ({
         ...c,
+        minAmount: 5, // Força o mínimo de 5 reais
         gateway: 'sigilopay',
         sigiloPayConfig: c.sigiloPayConfig || { publicKey: '', secretKey: '' },
         logoUrl: c.logoUrl || 'https://i.imgur.com/RbZQZ66.png',
