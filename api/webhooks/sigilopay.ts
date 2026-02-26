@@ -78,7 +78,11 @@ export default async function handler(req: any, res: any) {
           event_source_url: metadata.originUrl || '',
           user_data: { 
             em: metadata.email ? [hash(metadata.email)] : (client.email ? [hash(client.email)] : undefined),
-            ph: client.phone ? [hash(client.phone)] : undefined
+            ph: client.phone ? [hash(client.phone)] : undefined,
+            client_ip_address: metadata.ip,
+            client_user_agent: metadata.userAgent,
+            fbp: metadata.fbp,
+            fbc: metadata.fbc
           },
           custom_data: { 
             currency: 'BRL', 

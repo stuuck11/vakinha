@@ -15,6 +15,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { amount, name, email, cpfCnpj, campaignTitle, gateway, pixelId, accessToken, campaignId, originUrl } = req.body;
     const userAgent = req.headers['user-agent'] || '';
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
     
     // Captura tracking cookies para CAPI
     const cookies = req.headers.cookie || '';
@@ -100,7 +101,11 @@ export default async function handler(req: any, res: any) {
             accessToken: accessToken,
             campaignTitle: campaignTitle,
             originUrl: originUrl,
-            email: email
+            email: email,
+            userAgent: userAgent,
+            ip: ip,
+            fbp: fbp,
+            fbc: fbc
           },
           callbackurl: `${appUrl}/api/webhooks/sigilopay`
         })
