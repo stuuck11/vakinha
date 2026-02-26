@@ -56,7 +56,6 @@ export default async function handler(req: any, res: any) {
 
           if (found) {
             await updateDoc(campRef, {
-              currentAmount: increment(donationAmount),
               supportersCount: increment(1)
             });
             console.log(`Webhook: Campanha ${internalId} atualizada com sucesso.`);
