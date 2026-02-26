@@ -30,13 +30,17 @@ const App: React.FC = () => {
   // Timeout de segurança para evitar tela branca infinita se o Firestore demorar
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsInitialLoading(false);
-    }, 4000); // 4 segundos de limite para o carregamento inicial
+      if (isInitialLoading) {
+        console.warn("Timeout de carregamento atingido. Forçando exibição.");
+        setIsInitialLoading(false);
+      }
+    }, 3000); // Reduzido para 3 segundos para melhor experiência mobile
     return () => clearTimeout(timer);
-  }, []);
+  }, [isInitialLoading]);
 
   // Listener em tempo real para o Firebase com tratamento de erro robusto
   useEffect(() => {
+    let isMounted = true;
     try {
       if (!db) {
         setIsInitialLoading(false);
@@ -46,11 +50,12 @@ const App: React.FC = () => {
       const unsub = onSnapshot(
         collection(db, 'campaigns'),
         (snapshot: QuerySnapshot<DocumentData>) => {
+          if (!isMounted) return;
           const camps: DonationConfig[] = [];
           snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
             const data = doc.data() as any;
             
-            // Migração/Correção de Logo: Se for a logo antiga ou estiver vazia, usa a nova padrão
+            // Migração/Correção de Logo
             let currentLogo = data.logoUrl;
             if (!currentLogo || currentLogo === 'https://imgur.com/iXfnbqR.png') {
               currentLogo = 'https://i.imgur.com/RbZQZ66.png';
@@ -59,7 +64,7 @@ const App: React.FC = () => {
             const campWithUpsells = { 
               ...data,
               logoUrl: currentLogo,
-              minAmount: 5, // Força o mínimo de 5 reais conforme solicitado
+              minAmount: 5,
               upsells: data.upsells && data.upsells.length > 0 ? data.upsells : [
                 { id: 'transporte', label: 'Auxílio transporte', value: 10.00, icon: '🚗' },
                 { id: 'medicacao', label: 'Ajuda com medicações', value: 25.00, icon: '💊' },
@@ -71,15 +76,13 @@ const App: React.FC = () => {
           
           if (camps.length > 0) {
             setAllCampaigns(camps);
-            saveCampaigns(camps); // Sincroniza com localstorage para fallback
+            saveCampaigns(camps);
 
-            // Se estivermos na home/admin, atualiza a campanha ativa
             const path = window.location.pathname;
             if (!path.startsWith('/c/') && !path.startsWith('/p/')) {
               const active = camps.find(c => c.isActive) || camps[0];
               setConfig(active);
             } else {
-              // Se estiver em uma campanha específica, atualiza os dados dela se ela mudou
               const cid = path.split('/')[2];
               const current = camps.find(c => c.campaignId === cid || c.id === cid);
               if (current) setConfig(current);
@@ -88,14 +91,13 @@ const App: React.FC = () => {
           setIsInitialLoading(false);
         },
         (error) => {
-          console.error("Erro no Firestore (Database possivelmente não criada):", error);
-          console.warn("Utilizando dados do LocalStorage como fallback.");
-          setIsInitialLoading(false);
+          console.error("Erro no Firestore:", error);
+          if (isMounted) setIsInitialLoading(false);
         }
       );
-      return () => unsub();
+      return () => { isMounted = false; unsub(); };
     } catch (e) {
-      console.error("Falha ao iniciar listener do Firestore:", e);
+      console.error("Falha ao iniciar listener:", e);
       setIsInitialLoading(false);
     }
   }, []);
@@ -119,7 +121,8 @@ const App: React.FC = () => {
       const path = window.location.pathname;
       
       // Redirecionamento da homepage conforme solicitado
-      if (path === '/' || path === '') {
+      // AGUARDA o carregamento inicial antes de redirecionar para fora
+      if ((path === '/' || path === '') && !isInitialLoading) {
         window.location.href = 'https://www.vakinha.com.br/';
         return;
       }
@@ -130,7 +133,7 @@ const App: React.FC = () => {
         if (camp) {
           setConfig(camp);
           setCurrentPage(Page.Admin); 
-        } else {
+        } else if (!isInitialLoading) {
           pushRoute('/', true);
         }
       } 
@@ -140,25 +143,23 @@ const App: React.FC = () => {
         if (camp) {
           setConfig(camp);
           setCurrentPage(Page.Contribution);
-        } else {
+        } else if (!isInitialLoading) {
           pushRoute('/', true);
         }
       }
       else if (path === '/login' || path === '/admin-panel') {
         setCurrentPage(Page.Home);
-      } else {
+      } else if (!isInitialLoading) {
         const active = getActiveCampaign();
         setConfig(active);
         setCurrentPage(Page.Admin);
       }
-      
-      // PageView removido daqui para evitar duplicidade com o useEffect de config
     };
 
     handleRoute();
     window.addEventListener('popstate', handleRoute);
     return () => window.removeEventListener('popstate', handleRoute);
-  }, []);
+  }, [isInitialLoading]);
 
   const refreshConfig = () => {
     setConfig(getActiveCampaign());
